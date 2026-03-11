@@ -1003,36 +1003,37 @@ export default function Home() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingCompany, setDeletingCompany] = useState<Company | null>(null)
 
-  // Загрузка данных из API
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true)
-        
-        // Загружаем категории и компании параллельно
-        const [categoriesRes, companiesRes] = await Promise.all([
-          fetch('/api/categories'),
-          fetch('/api/companies?limit=200')
-        ])
-        
-        if (!categoriesRes.ok || !companiesRes.ok) {
-          throw new Error('Ошибка загрузки данных')
-        }
-        
-        const categoriesData = await categoriesRes.json()
-        const companiesData = await companiesRes.json()
-        
-        setCategories(categoriesData)
-        setCompanies(Array.isArray(companiesData) ? companiesData : (companiesData.companies || []))
-        setError(null)
-      } catch (err) {
-        console.error('Ошибка загрузки:', err)
-        setError('Не удалось загрузить данные')
-      } finally {
-        setLoading(false)
+  // Функция загрузки данных из API
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      
+      // Загружаем категории и компании параллельно
+      const [categoriesRes, companiesRes] = await Promise.all([
+        fetch('/api/categories'),
+        fetch('/api/companies?limit=200')
+      ])
+      
+      if (!categoriesRes.ok || !companiesRes.ok) {
+        throw new Error('Ошибка загрузки данных')
       }
+      
+      const categoriesData = await categoriesRes.json()
+      const companiesData = await companiesRes.json()
+      
+      setCategories(categoriesData)
+      setCompanies(Array.isArray(companiesData) ? companiesData : (companiesData.companies || []))
+      setError(null)
+    } catch (err) {
+      console.error('Ошибка загрузки:', err)
+      setError('Не удалось загрузить данные')
+    } finally {
+      setLoading(false)
     }
-    
+  }
+
+  // Загрузка при монтировании
+  useEffect(() => {
     loadData()
   }, [])
 
