@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { CompanyFormDialog } from '@/components/CompanyFormDialog'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { 
   MessageSquare, 
   Mic, 
@@ -32,7 +34,11 @@ import {
   XCircle,
   Minus,
   Search,
-  X
+  X,
+  Loader2,
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react'
 
 // Текущий год
@@ -55,6 +61,7 @@ const marketOverview = {
 
 // Типизация компании
 interface Company {
+  id: string
   name: string
   inn?: string
   url: string
@@ -63,373 +70,46 @@ interface Company {
   status: 'leader' | 'active'
   revenue?: string
   alsoIn?: string[]
+  categoryId: string
+  category?: {
+    id: string
+    key: string
+    title: string
+    iconName: string
+  }
 }
 
-// Данные по технологиям с разделением на топ-6 и остальные
-const techData = {
-  llm: {
-    title: 'LLM (Чат-боты)',
-    description: 'Большие языковые модели для генерации текста и диалогов',
-    marketSize: 'Входит в топ сегменты рынка ИИ',
-    growth: 'Активное развитие с 2023 года',
-    icon: MessageSquare,
-    leaders: [
-      {
-        name: 'GigaChat (Сбер)',
-        url: 'https://giga.chat/',
-        description: 'Флагманская LLM Сбера. Генерация текста, изображений, диалоги. Интеграция с Fusion Brain для генерации визуального контента.',
-        features: ['Генерация текста', 'Генерация изображений', 'API', 'Enterprise'],
-        status: 'leader' as const,
-        revenue: 'Лидер рынка',
-        alsoIn: ['Генерация']
-      },
-      {
-        name: 'YandexGPT',
-        url: 'https://ya.ru/ai/index',
-        description: 'Флагманская LLM Яндекса. Версия 4 сопоставима с GPT-4o. Глубокая интеграция с экосистемой Яндекса.',
-        features: ['Генерация текста', 'RAG', 'API', 'Yandex 360'],
-        status: 'leader' as const,
-        revenue: 'Лидер рынка',
-        alsoIn: ['Аудио', 'Генерация']
-      },
-      {
-        name: 'MWS AI (МТС)',
-        inn: '7707767501',
-        url: 'https://mts.ai/',
-        description: 'Платформа MWS GPT. ИИ-агенты на любых моделях. До 100 тыс. диалогов в день. Kodify для генерации кода.',
-        features: ['MWS GPT', 'ИИ-агенты', 'Kodify', 'NLP'],
-        status: 'leader' as const,
-        revenue: '51.4 млрд ₽',
-        alsoIn: ['Аудио', 'Видео', 'DL']
-      },
-      {
-        name: 'Just AI',
-        inn: '7813286694',
-        url: 'https://just-ai.com/',
-        description: 'Платформа JAICP для чат-ботов и голосовых ассистентов. Jay Copilot, Caila. 14 лет опыта в разговорном AI.',
-        features: ['JAICP', 'Чат-боты', 'Голосовые боты', 'RAG'],
-        status: 'leader' as const,
-        revenue: '633 млн ₽',
-        alsoIn: ['Аудио']
-      },
-      {
-        name: 'Яндекс.Облако',
-        inn: '7704458262',
-        url: 'https://yandex.cloud/ru',
-        description: 'ML-платформа Yandex AI Studio. Обучение и развертывание моделей. AutoML, инференс LLM.',
-        features: ['ML-платформа', 'LLM инференс', 'AutoML', 'GPU'],
-        status: 'leader' as const,
-        revenue: '1.34 млрд ₽',
-        alsoIn: ['DL']
-      },
-      {
-        name: 'Сбер Бизнес Софт',
-        inn: '7730269550',
-        url: 'https://sberbs.ru/',
-        description: 'ИИ-платформа для бизнеса. Готовые сервисы на основе ИИ. Интеграция с экосистемой Сбера.',
-        features: ['ИИ-платформа', 'Чат-боты', 'CV-решения', 'Интеграции'],
-        status: 'leader' as const,
-        revenue: 'Лидер экосистемы',
-        alsoIn: ['Видео', 'Генерация']
-      }
-    ],
-    others: [
-      { name: 'CorpGPT (Нейросети)', inn: '7733349229', url: 'https://corpgpt.ru/', description: 'No-code платформа для ИИ-агентов', features: ['No-code', 'Enterprise'], status: 'active' as const },
-      { name: 'meetAI', inn: '9705223482', url: 'https://mymeet.ai/ru/', description: 'ИИ-ассистент для встреч', features: ['Транскрибация', 'Отчёты'], status: 'active' as const },
-      { name: 'GPTZATOR (Lad)', inn: '5260320971', url: 'https://gptzator.ru/', description: 'Корпоративный поиск и RAG', features: ['RAG', 'Поиск'], status: 'active' as const },
-      { name: 'PROсковья (1С)', inn: '9713015920', url: 'https://1cproconsulting.ru/proskovya', description: 'ИИ для 1С на базе LLM', features: ['1С', 'LLM'], status: 'active' as const },
-      { name: 'AutoFAQ', inn: '5047186705', url: 'https://autofaq.ai/', description: 'Чат-боты для поддержки', features: ['Поддержка', 'Xplain'], status: 'active' as const },
-      { name: 'Robin (Softline)', inn: '9725114756', url: 'https://slsoft.ru/products/robin/', description: 'RPA + ИИ-ассистент', features: ['RPA', 'Ассистент'], status: 'active' as const },
-      { name: 'Ainergy', inn: '7840113080', url: 'https://ainergy.ru/', description: 'Корпоративный генеративный ИИ', features: ['GenAI', 'On-premise'], status: 'active' as const, alsoIn: ['Генерация'] },
-      { name: 'Шерпа Роботикс', inn: '3019027499', url: 'https://sherparpa.ru/', description: 'RPA + ИИ-агенты', features: ['RPA', 'Автоматизация'], status: 'active' as const },
-      { name: 'Rubbles', inn: '7725806256', url: 'https://rubbles.ru/', description: 'GenAI Suite для бизнеса', features: ['GenAI', 'Suite'], status: 'active' as const, revenue: '704.9 млн ₽', alsoIn: ['Генерация'] },
-      { name: 'Рег.облако', inn: '7733568767', url: 'https://reg.cloud/', description: 'ИИ-ассистент в облаке', features: ['Ассистент', 'Облако'], status: 'active' as const },
-      { name: 'Наносемантика', inn: '7703761097', url: 'https://nanosemantics.ai/', description: 'Чат-боты, виртуальные ассистенты', features: ['NLP', 'Чат-боты'], status: 'active' as const, alsoIn: ['Аудио', 'Видео'] },
-      { name: 'Directum', inn: '1835056809', url: 'https://www.directum.ru/', description: 'Документооборот с ИИ', features: ['Документы', 'ИИ'], status: 'active' as const },
-      { name: 'BSS', inn: '7726587769', url: 'https://bssys.com/', description: 'Чат-платформа, речевая аналитика', features: ['Чат-платформа', 'Аналитика'], status: 'active' as const, alsoIn: ['Аудио'] }
-    ]
-  },
-  audio: {
-    title: 'Аудио-аналитика',
-    description: 'Технологии распознавания и синтеза речи, голосовые помощники',
-    marketSize: '7+ млрд ₽',
-    growth: '+25% в год',
-    icon: Mic,
-    leaders: [
-      {
-        name: 'Just AI',
-        inn: '7813286694',
-        url: 'https://just-ai.com/',
-        description: 'Aimyvoice - маркетплейс готовых голосов. Голосовые чат-боты. Платформа JAICP. 14 лет опыта.',
-        features: ['TTS', 'Голосовые боты', 'Aimyvoice', 'STT'],
-        status: 'leader' as const,
-        revenue: '633 млн ₽',
-        alsoIn: ['LLM']
-      },
-      {
-        name: 'Naumen',
-        inn: '6671111140',
-        url: 'https://www.naumen.ru/',
-        description: 'Речевая аналитика для контакт-центров. Распознавание речи, анализ звонков, контроль качества.',
-        features: ['Речевая аналитика', 'ASR', 'Контакт-центры', 'Sentiment'],
-        status: 'leader' as const,
-        revenue: 'Лидер контакт-центров'
-      },
-      {
-        name: '3iTech',
-        inn: '7716554066',
-        url: 'https://3itech.ru/',
-        description: 'Вендор речевых технологий с ИИ. Генеративный AI для бизнеса. Решения для CX.',
-        features: ['Речевые технологии', 'GenAI', 'CX', 'Биометрия'],
-        status: 'leader' as const,
-        revenue: 'Активный рост',
-        alsoIn: ['LLM', 'Генерация']
-      },
-      {
-        name: 'BSS',
-        inn: '7726587769',
-        url: 'https://bssys.com/',
-        description: 'Речевая аналитика, голосовая биометрия, тренажёр оператора. Топ-10 рынка ИИ.',
-        features: ['Речевая аналитика', 'Биометрия', 'Суфлёр', 'Тренажёр'],
-        status: 'leader' as const,
-        revenue: 'Топ-10 рынка',
-        alsoIn: ['LLM']
-      },
-      {
-        name: 'Наносемантика',
-        inn: '7703761097',
-        url: 'https://nanosemantics.ai/',
-        description: 'Голосовые ассистенты и виртуальные собеседники. NLP, речевые технологии. Основана в 2005.',
-        features: ['Голосовые ассистенты', 'NLP', 'Диалоги', 'Аватары'],
-        status: 'leader' as const,
-        revenue: 'Лидер NLP',
-        alsoIn: ['LLM', 'Видео']
-      },
-      {
-        name: 'VS Robotics',
-        inn: '7736303529',
-        url: 'https://vsrobotics.ru/',
-        description: 'Голосовые роботы для контакт-центров. Распознавание речи, анализ эмоций, транскрибация.',
-        features: ['Голосовой робот', 'ASR', 'Эмоции', 'Транскрибация'],
-        status: 'leader' as const,
-        revenue: 'Активный игрок'
-      }
-    ],
-    others: [
-      { name: 'Neovox', inn: '7723813089', url: 'https://neovox.ru/', description: 'Речевая аналитика, транскрибация', features: ['ASR', 'Аналитика'], status: 'active' as const },
-      { name: 'MWS AI (МТС)', inn: '7707767501', url: 'https://mts.ai/', description: 'Речевые технологии', features: ['NLP', 'ASR'], status: 'active' as const, alsoIn: ['LLM', 'Видео', 'DL'] }
-    ]
-  },
-  video: {
-    title: 'Видео-аналитика',
-    description: 'Компьютерное зрение, распознавание лиц, анализ видеопотоков',
-    marketSize: '22,6 млрд ₽',
-    growth: '+14% в год до 2030',
-    icon: Video,
-    leaders: [
-      {
-        name: 'VisionLabs',
-        url: 'https://visionlabs.ru/',
-        description: 'Лидер рынка компьютерного зрения в России. Биометрия, видеоаналитика, распознавание лиц. Международное присутствие.',
-        features: ['Распознавание лиц', 'Биометрия', 'Видеоаналитика', 'CV'],
-        status: 'leader' as const,
-        revenue: 'Лидер рынка'
-      },
-      {
-        name: 'VizorLabs',
-        url: 'https://vizorlabs.ru/',
-        description: 'Лидер промышленной видеоаналитики. Мониторинг безопасности труда, контроль СИЗ, детекция нарушений.',
-        features: ['Промышленная CV', 'Безопасность', 'СИЗ', 'Мониторинг'],
-        status: 'leader' as const,
-        revenue: 'Лидер пром. аналитики'
-      },
-      {
-        name: 'Content AI',
-        inn: '9715416652',
-        url: 'https://contentai.ru/',
-        description: 'Интеллектуальная обработка документов. OCR, потоковое сканирование, нейросети для чтения документов.',
-        features: ['OCR', 'Обработка документов', 'Сканирование', 'CV'],
-        status: 'leader' as const,
-        revenue: '1.2 млрд ₽',
-        alsoIn: ['DL']
-      },
-      {
-        name: 'Норд Клан',
-        inn: '7325165872',
-        url: 'https://nordclan.com/',
-        description: 'ML Sense - машинное зрение для промышленности. Контроль качества, детекция дефектов. Лидеры цифровизации 2025.',
-        features: ['ML Sense', 'Контроль качества', 'Дефекты', 'Промышленность'],
-        status: 'leader' as const,
-        revenue: 'Лидер цифровизации',
-        alsoIn: ['DL']
-      },
-      {
-        name: 'Автомакон (Неурус)',
-        inn: '5003074225',
-        url: 'https://automacon.ru/',
-        description: 'Неурус - промышленная видеоаналитика. AI-видеоаналитика для ритейла, контроль качества, мониторинг.',
-        features: ['Промышленная CV', 'Ритейл', 'AI-аналитика', 'Big Data'],
-        status: 'leader' as const,
-        revenue: 'Активный интегратор',
-        alsoIn: ['DL']
-      },
-      {
-        name: 'Юзтех',
-        inn: '9723236163',
-        url: 'https://usetech.ru/',
-        description: 'Компьютерное зрение и машинное обучение. Системы машинного зрения для СИЗ, детектирование объектов.',
-        features: ['CV', 'ML', 'СИЗ', 'Детектирование'],
-        status: 'leader' as const,
-        revenue: 'Активный игрок',
-        alsoIn: ['DL']
-      }
-    ],
-    others: [
-      { name: 'ZeBrains', inn: '7325145393', url: 'https://zebrains.ru/', description: 'CV для поиска дефектов', features: ['CV', 'ML'], status: 'active' as const, alsoIn: ['DL'] },
-      { name: 'MWS AI (МТС)', inn: '7707767501', url: 'https://mts.ai/', description: 'Компьютерное зрение', features: ['CV', 'NLP'], status: 'active' as const, alsoIn: ['LLM', 'Аудио', 'DL'] },
-      { name: 'Сбер Бизнес Софт', inn: '7730269550', url: 'https://sberbs.ru/', description: 'CV-решения', features: ['CV', 'ИИ'], status: 'active' as const, alsoIn: ['LLM', 'Генерация'] },
-      { name: 'Наносемантика', inn: '7703761097', url: 'https://nanosemantics.ai/', description: 'CV-решения, аватары', features: ['CV', 'Аватары'], status: 'active' as const, alsoIn: ['LLM', 'Аудио'] }
-    ]
-  },
-  dl: {
-    title: 'Глубокое обучение (Deep Learning)',
-    description: 'Нейронные сети для сложных задач машинного обучения',
-    marketSize: 'Основа всех ИИ-решений',
-    growth: '+30% глобальный рост',
-    icon: Brain,
-    leaders: [
-      {
-        name: 'Сбер.AI',
-        url: 'https://sber.ai/',
-        description: 'Экосистема решений на базе DL. MLOps, предобученные модели, NLP, CV. Полный цикл AI-разработки.',
-        features: ['MLOps', 'Предобученные модели', 'NLP', 'CV'],
-        status: 'leader' as const,
-        revenue: 'Лидер экосистемы'
-      },
-      {
-        name: 'Яндекс.Облако',
-        inn: '7704458262',
-        url: 'https://yandex.cloud/ru',
-        description: 'Yandex AI Studio - платформа для ML. Обучение моделей, инференс, AutoML. GPU кластеры.',
-        features: ['ML-платформа', 'GPU', 'AutoML', 'Инференс'],
-        status: 'leader' as const,
-        revenue: '1.34 млрд ₽',
-        alsoIn: ['LLM']
-      },
-      {
-        name: 'Cloud.ru',
-        inn: '7736279160',
-        url: 'https://cloud.ru/',
-        description: 'Evolution AI Factory - платформа для GenAI и ML. Распределённое обучение, ML Inference, GPU NVIDIA.',
-        features: ['AI Factory', 'ML Inference', 'Distributed Train', 'GPU'],
-        status: 'leader' as const,
-        revenue: 'Лидер облачного ИИ'
-      },
-      {
-        name: 'MWS AI (МТС)',
-        inn: '7707767501',
-        url: 'https://mts.ai/',
-        description: 'ML-решения, Kodify (генерация кода). Полный цикл AI-разработки. Консалтинг и интеграция.',
-        features: ['ML', 'Kodify', 'Консалтинг', 'Интеграция'],
-        status: 'leader' as const,
-        revenue: '51.4 млрд ₽',
-        alsoIn: ['LLM', 'Аудио', 'Видео']
-      },
-      {
-        name: 'Норд Клан',
-        inn: '7325165872',
-        url: 'https://nordclan.com/',
-        description: 'ML-платформа для промышленности. ML Sense, нейросети для контроля качества. Лидеры цифровизации.',
-        features: ['ML Sense', 'Нейросети', 'Промышленность', 'CV'],
-        status: 'leader' as const,
-        revenue: 'Лидер цифровизации',
-        alsoIn: ['Видео']
-      },
-      {
-        name: 'Napoleon IT',
-        inn: '7453230164',
-        url: 'https://napoleonit.ru/',
-        description: 'ML-разработка, нейросети. AI TALENT HUB с ИТМО. Data Science, Computer Vision.',
-        features: ['ML', 'Нейросети', 'Data Science', 'Обучение'],
-        status: 'leader' as const,
-        revenue: 'Активный игрок'
-      }
-    ],
-    others: [
-      { name: 'Content AI', inn: '9715416652', url: 'https://contentai.ru/', description: 'ML для обработки документов', features: ['ML', 'OCR'], status: 'active' as const, alsoIn: ['Видео'] },
-      { name: 'Юзтех', inn: '9723236163', url: 'https://usetech.ru/', description: 'ML и компьютерное зрение', features: ['ML', 'CV'], status: 'active' as const, alsoIn: ['Видео'] },
-      { name: 'Автомакон', inn: '5003074225', url: 'https://automacon.ru/', description: 'Big Data и ML', features: ['Big Data', 'ML'], status: 'active' as const, alsoIn: ['Видео'] },
-      { name: 'ZeBrains', inn: '7325145393', url: 'https://zebrains.ru/', description: 'ML-решения', features: ['AI/ML', 'PR'], status: 'active' as const, alsoIn: ['Видео'] },
-      { name: 'SimbirSoft', inn: '7300044805', url: 'https://www.simbirsoft.com/', description: 'ML и глубокое обучение', features: ['ML', 'DL'], status: 'active' as const },
-      { name: 'Terabit Digital', inn: '9721112109', url: 'https://terabit.ai/', description: 'ML-разработка под ключ', features: ['ML', 'AI'], status: 'active' as const }
-    ]
-  },
-  gen: {
-    title: 'Генеративный ИИ',
-    description: 'Создание контента: изображения, видео, аудио, текст',
-    marketSize: 'Быстрорастущий сегмент',
-    growth: 'Экспоненциальный рост',
-    icon: Sparkles,
-    leaders: [
-      {
-        name: 'Kandinsky (Сбер)',
-        url: 'https://fusionbrain.ai/',
-        description: 'Kandinsky 5.0 - флагманская российская нейросеть для генерации изображений и видео по текстовому описанию на русском.',
-        features: ['Генерация изображений', 'Генерация видео', 'Русский язык', 'API'],
-        status: 'leader' as const,
-        revenue: 'Лидер генерации'
-      },
-      {
-        name: 'Шедеврум (Яндекс)',
-        url: 'https://yandex.ru/',
-        description: 'Мобильное приложение для генерации изображений с помощью ИИ. Интеграция с экосистемой Яндекса.',
-        features: ['Генерация изображений', 'Мобильное приложение', 'Стили', 'Фильтры'],
-        status: 'leader' as const,
-        revenue: 'Лидер генерации'
-      },
-      {
-        name: 'GigaChat (Сбер)',
-        url: 'https://giga.chat/',
-        description: 'Генерация изображений вместе с текстом. Интеграция с Fusion Brain. Мульти-модальная генерация.',
-        features: ['Генерация текста', 'Генерация изображений', 'Мульти-модальность'],
-        status: 'leader' as const,
-        revenue: 'Лидер рынка',
-        alsoIn: ['LLM']
-      },
-      {
-        name: 'Yandex',
-        url: 'https://ya.ru/ai/index',
-        description: 'YandexGPT + YandexART. Полный цикл генеративного ИИ. Текст, изображения, код.',
-        features: ['Генерация текста', 'Генерация изображений', 'YandexART'],
-        status: 'leader' as const,
-        revenue: 'Лидер рынка',
-        alsoIn: ['LLM', 'Аудио']
-      },
-      {
-        name: 'Rubbles',
-        inn: '7725806256',
-        url: 'https://rubbles.ru/',
-        description: 'Rubbles Generative AI Suite - платформа генеративных моделей для крупного бизнеса. On-premise.',
-        features: ['GenAI Suite', 'On-premise', 'Enterprise', 'Безопасность'],
-        status: 'leader' as const,
-        revenue: '704.9 млн ₽',
-        alsoIn: ['LLM']
-      },
-      {
-        name: 'Ainergy',
-        inn: '7840113080',
-        url: 'https://ainergy.ru/',
-        description: 'Корпоративная платформа генеративного ИИ. Работает в закрытом контуре. Low-code интеграция.',
-        features: ['GenAI', 'On-premise', 'Low-code', 'Корпоративный'],
-        status: 'leader' as const,
-        revenue: '4.2 млн ₽',
-        alsoIn: ['LLM']
-      }
-    ],
-    others: [
-      { name: '3iTech', inn: '7716554066', url: 'https://3itech.ru/', description: 'Генеративный AI', features: ['GenAI', 'Речь'], status: 'active' as const, alsoIn: ['LLM', 'Аудио'] }
-    ]
-  }
+// Типизация категории
+interface Category {
+  id: string
+  key: string
+  title: string
+  description: string
+  marketSize: string
+  growth: string
+  iconName: string
+  companiesCount: number
+  leadersCount: number
+}
+
+// Типизация для techData
+interface TechCategory {
+  title: string
+  description: string
+  marketSize: string
+  growth: string
+  icon: React.ElementType
+  leaders: Company[]
+  others: Company[]
+}
+
+// Иконки по ключам категорий
+const iconMap: Record<string, React.ElementType> = {
+  MessageSquare: MessageSquare,
+  Mic: Mic,
+  Video: Video,
+  Brain: Brain,
+  Sparkles: Sparkles,
 }
 
 // Цвета для бейджей направлений
@@ -444,7 +124,17 @@ const directionColors: Record<string, string> = {
 // ============================================
 // КОМПОНЕНТ: Карточка лидера (большая)
 // ============================================
-function LeaderCard({ company, isHighlighted }: { company: Company; isHighlighted?: boolean }) {
+function LeaderCard({ 
+  company, 
+  isHighlighted,
+  onEdit,
+  onDelete 
+}: { 
+  company: Company
+  isHighlighted?: boolean
+  onEdit?: (company: Company) => void
+  onDelete?: (company: Company) => void
+}) {
   const [isHovered, setIsHovered] = useState(false)
   
   return (
@@ -502,16 +192,37 @@ function LeaderCard({ company, isHighlighted }: { company: Company; isHighlighte
             </div>
           </div>
         )}
-        <div className="mt-auto pt-3">
+        <div className="mt-auto pt-3 flex gap-2">
           <Button 
             variant={isHovered ? "default" : "outline"}
             size="sm" 
-            className="w-full transition-all"
+            className="flex-1 transition-all"
             onClick={() => window.open(company.url, '_blank')}
           >
             <ExternalLink className="h-4 w-4 mr-2" />
             Перейти на сайт
           </Button>
+          {onEdit && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => onEdit(company)}
+              title="Редактировать"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => onDelete(company)}
+              className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              title="Удалить"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -521,7 +232,17 @@ function LeaderCard({ company, isHighlighted }: { company: Company; isHighlighte
 // ============================================
 // КОМПОНЕНТ: Мини-карточка
 // ============================================
-function MiniCard({ company, isHighlighted }: { company: Company; isHighlighted?: boolean }) {
+function MiniCard({ 
+  company, 
+  isHighlighted,
+  onEdit,
+  onDelete 
+}: { 
+  company: Company
+  isHighlighted?: boolean
+  onEdit?: (company: Company) => void
+  onDelete?: (company: Company) => void
+}) {
   return (
     <Card className={`group hover:shadow-md transition-all duration-200 hover:border-primary/30 h-full flex flex-col
       ${isHighlighted ? 'ring-2 ring-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/30' : ''}`}>
@@ -554,14 +275,38 @@ function MiniCard({ company, isHighlighted }: { company: Company; isHighlighted?
               </Badge>
             ))}
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-6 px-2 text-xs"
-            onClick={() => window.open(company.url, '_blank')}
-          >
-            <ExternalLink className="h-3 w-3" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {onEdit && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 px-1"
+                onClick={() => onEdit(company)}
+                title="Редактировать"
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+            )}
+            {onDelete && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 px-1 text-destructive hover:text-destructive"
+                onClick={() => onDelete(company)}
+                title="Удалить"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 px-2 text-xs"
+              onClick={() => window.open(company.url, '_blank')}
+            >
+              <ExternalLink className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -573,7 +318,8 @@ function MiniCard({ company, isHighlighted }: { company: Company; isHighlighted?
 // ============================================
 function CategorySectionVariantA({ 
   title, description, marketSize, growth, leaders, others, icon: Icon,
-  searchQuery = '', companyMatchesSearch = () => false
+  searchQuery = '', companyMatchesSearch = () => false,
+  onEditCompany, onDeleteCompany
 }: { 
   title: string
   description: string
@@ -584,6 +330,8 @@ function CategorySectionVariantA({
   icon: React.ElementType
   searchQuery?: string
   companyMatchesSearch?: (company: Company, query: string) => boolean
+  onEditCompany?: (company: Company) => void
+  onDeleteCompany?: (company: Company) => void
 }) {
   return (
     <div className="space-y-6">
@@ -645,8 +393,14 @@ function CategorySectionVariantA({
           Лидеры рынка
         </h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {leaders.map((company, idx) => (
-            <LeaderCard key={idx} company={company} isHighlighted={companyMatchesSearch(company, searchQuery)} />
+          {leaders.map((company) => (
+            <LeaderCard 
+              key={company.id} 
+              company={company} 
+              isHighlighted={companyMatchesSearch(company, searchQuery)}
+              onEdit={onEditCompany}
+              onDelete={onDeleteCompany}
+            />
           ))}
         </div>
       </div>
@@ -659,8 +413,14 @@ function CategorySectionVariantA({
             Другие игроки ({others.length})
           </h3>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {others.map((company, idx) => (
-              <MiniCard key={idx} company={company} isHighlighted={companyMatchesSearch(company, searchQuery)} />
+            {others.map((company) => (
+              <MiniCard 
+                key={company.id} 
+                company={company} 
+                isHighlighted={companyMatchesSearch(company, searchQuery)}
+                onEdit={onEditCompany}
+                onDelete={onDeleteCompany}
+              />
             ))}
           </div>
         </div>
@@ -674,7 +434,8 @@ function CategorySectionVariantA({
 // ============================================
 function CategorySectionVariantB({ 
   title, description, marketSize, growth, leaders, others, icon: Icon,
-  searchQuery = '', companyMatchesSearch = () => false
+  searchQuery = '', companyMatchesSearch = () => false,
+  onEditCompany, onDeleteCompany
 }: { 
   title: string
   description: string
@@ -685,6 +446,8 @@ function CategorySectionVariantB({
   icon: React.ElementType
   searchQuery?: string
   companyMatchesSearch?: (company: Company, query: string) => boolean
+  onEditCompany?: (company: Company) => void
+  onDeleteCompany?: (company: Company) => void
 }) {
   return (
     <div className="space-y-6">
@@ -711,8 +474,14 @@ function CategorySectionVariantB({
           Лидеры рынка
         </h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {leaders.map((company, idx) => (
-            <LeaderCard key={idx} company={company} isHighlighted={companyMatchesSearch(company, searchQuery)} />
+          {leaders.map((company) => (
+            <LeaderCard 
+              key={company.id} 
+              company={company} 
+              isHighlighted={companyMatchesSearch(company, searchQuery)}
+              onEdit={onEditCompany}
+              onDelete={onDeleteCompany}
+            />
           ))}
         </div>
       </div>
@@ -737,10 +506,10 @@ function CategorySectionVariantB({
                     </tr>
                   </thead>
                   <tbody>
-                    {others.map((company, idx) => {
+                    {others.map((company) => {
                       const isHighlighted = companyMatchesSearch(company, searchQuery)
                       return (
-                        <tr key={idx} className={`border-t hover:bg-muted/30 ${isHighlighted ? 'bg-orange-500/10 ring-1 ring-orange-500/50' : ''}`}>
+                        <tr key={company.id} className={`border-t hover:bg-muted/30 ${isHighlighted ? 'bg-orange-500/10 ring-1 ring-orange-500/50' : ''}`}>
                           <td className="p-3">
                             <div>
                               <p className="font-medium text-sm">{company.name}</p>
@@ -758,9 +527,32 @@ function CategorySectionVariantB({
                             </div>
                           </td>
                           <td className="p-3 text-right">
-                            <Button variant="ghost" size="sm" onClick={() => window.open(company.url, '_blank')}>
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              {onEditCompany && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => onEditCompany(company)}
+                                  title="Редактировать"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {onDeleteCompany && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => onDeleteCompany(company)}
+                                  className="text-destructive hover:text-destructive"
+                                  title="Удалить"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="sm" onClick={() => window.open(company.url, '_blank')}>
+                                <ExternalLink className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -937,30 +729,26 @@ function BubbleRiskBlock() {
 // КОМПОНЕНТ: Сравнение закрытого контура
 // ============================================
 function OnPremiseComparison() {
-  // Расчёты для 1000 пользователей
   const calculations = {
-    // Вариант 1: CorpGPT On-Premise
     corpgpt: {
-      licenseYearly: 500000, // ₽/год по тарифу Корпорация
-      deployment: 1500000, // единоразово (оценка)
-      hardware: 8000000, // сервер с GPU (A100/H100)
-      maintenance: 600000, // ₽/год поддержка
-      admin: 1200000, // ₽/год администратор (0.5 FTE)
-      totalYear1: 11800000, // год 1
-      totalYear2Plus: 2300000, // год 2+
+      licenseYearly: 500000,
+      deployment: 1500000,
+      hardware: 8000000,
+      maintenance: 600000,
+      admin: 1200000,
+      totalYear1: 11800000,
+      totalYear2Plus: 2300000,
     },
-    // Вариант 2: Облачный LLM
     cloud: {
-      perUser: 18000, // ₽/год на пользователя
+      perUser: 18000,
       users: 1000,
-      totalYearly: 18000000, // ₽/год
+      totalYearly: 18000000,
     },
-    // Вариант 3: Своя инфраструктура
     ownInfra: {
-      hardware: 15000000, // 2x A100 сервер
-      setup: 3000000, // настройка и внедрение
-      admin: 2400000, // ₽/год (1 FTE)
-      electricity: 600000, // ₽/год
+      hardware: 15000000,
+      setup: 3000000,
+      admin: 2400000,
+      electricity: 600000,
       totalYear1: 21000000,
       totalYear2Plus: 3000000,
     }
@@ -968,7 +756,6 @@ function OnPremiseComparison() {
 
   return (
     <div className="space-y-6">
-      {/* Заголовок */}
       <div className="flex items-start gap-4">
         <div className="p-3 rounded-xl bg-primary/10">
           <Server className="h-6 w-6 text-primary" />
@@ -979,9 +766,7 @@ function OnPremiseComparison() {
         </div>
       </div>
 
-      {/* Варианты */}
       <div className="grid md:grid-cols-3 gap-4">
-        {/* CorpGPT On-Premise - только ПО, серверы отдельно */}
         <Card className="border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -997,16 +782,16 @@ function OnPremiseComparison() {
                 <span className="font-medium">500 000 ₽</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Развёртывание:</span>
-                <span className="font-medium">~1 500 000 ₽</span>
+                <span className="text-muted-foreground">Внедрение:</span>
+                <span className="font-medium">1,5 млн ₽</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Сервер (GPU):</span>
-                <span className="font-medium">~8 000 000 ₽</span>
+                <span className="text-muted-foreground">Сервер (A100/H100):</span>
+                <span className="font-medium">8 млн ₽</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Поддержка/админ:</span>
-                <span className="font-medium">1 800 000 ₽/год</span>
+                <span className="text-muted-foreground">Поддержка:</span>
+                <span className="font-medium">600 000 ₽/год</span>
               </div>
             </div>
             <div className="pt-2 border-t">
@@ -1020,41 +805,35 @@ function OnPremiseComparison() {
               </div>
             </div>
             <div className="flex gap-1 flex-wrap">
-              <Badge variant="outline" className="text-xs">Быстрый запуск</Badge>
-              <Badge variant="outline" className="text-xs">Поддержка вендора</Badge>
-              <Badge variant="outline" className="text-xs">Только ПО</Badge>
+              <Badge variant="outline" className="text-xs">Оптимальный ROI</Badge>
+              <Badge variant="outline" className="text-xs">152-ФЗ</Badge>
             </div>
           </CardContent>
         </Card>
 
-        {/* Облачный LLM */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
+              <PieChart className="h-5 w-5 text-purple-600" />
               Облачный LLM
             </CardTitle>
-            <CardDescription>SaaS-подписка (GigaChat, YandexGPT)</CardDescription>
+            <CardDescription>SaaS без серверов</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">На пользователя:</span>
-                <span className="font-medium">~18 000 ₽/год</span>
+                <span className="font-medium">18 000 ₽/год</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Пользователей:</span>
-                <span className="font-medium">1 000</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Интеграция:</span>
-                <span className="font-medium">~500 000 ₽</span>
+                <span className="font-medium">1000</span>
               </div>
             </div>
             <div className="pt-2 border-t">
               <div className="flex justify-between font-semibold">
                 <span>Год 1:</span>
-                <span className="text-blue-600">18,5 млн ₽</span>
+                <span className="text-purple-600">18 млн ₽</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Год 2+:</span>
@@ -1062,38 +841,33 @@ function OnPremiseComparison() {
               </div>
             </div>
             <div className="flex gap-1 flex-wrap">
-              <Badge variant="outline" className="text-xs">Нет железа</Badge>
-              <Badge variant="outline" className="text-xs">Масштабируемость</Badge>
+              <Badge variant="outline" className="text-xs">Быстрый старт</Badge>
+              <Badge variant="outline" className="text-xs">Масштабирование</Badge>
             </div>
           </CardContent>
         </Card>
 
-        {/* Своя инфраструктура */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Server className="h-5 w-5 text-purple-600" />
+              <Server className="h-5 w-5 text-orange-600" />
               Своя инфраструктура
             </CardTitle>
-            <CardDescription>Open-source LLM (LLaMA, Mistral)</CardDescription>
+            <CardDescription>Open Source модели</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Серверы (2x A100):</span>
-                <span className="font-medium">~15 000 000 ₽</span>
+                <span className="text-muted-foreground">2x A100 сервер:</span>
+                <span className="font-medium">15 млн ₽</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Настройка:</span>
-                <span className="font-medium">~3 000 000 ₽</span>
+                <span className="text-muted-foreground">Внедрение:</span>
+                <span className="font-medium">3 млн ₽</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Администратор:</span>
-                <span className="font-medium">2 400 000 ₽/год</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Электричество:</span>
-                <span className="font-medium">600 000 ₽/год</span>
+                <span className="font-medium">2,4 млн ₽/год</span>
               </div>
             </div>
             <div className="pt-2 border-t">
@@ -1114,7 +888,6 @@ function OnPremiseComparison() {
         </Card>
       </div>
 
-      {/* Сравнительная таблица */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1152,99 +925,12 @@ function OnPremiseComparison() {
                   <td className="p-3 text-center">⭐⭐⭐</td>
                   <td className="p-3 text-center text-emerald-600">⭐⭐⭐⭐⭐</td>
                 </tr>
-                <tr className="border-t bg-muted/20">
-                  <td className="p-3">Требуемые компетенции</td>
-                  <td className="p-3 text-center text-emerald-600">Низкие</td>
-                  <td className="p-3 text-center text-emerald-600">Низкие</td>
-                  <td className="p-3 text-center">Высокие</td>
-                </tr>
-                <tr className="border-t">
-                  <td className="p-3">Поддержка</td>
-                  <td className="p-3 text-center text-emerald-600">Вендор</td>
-                  <td className="p-3 text-center text-emerald-600">Вендор</td>
-                  <td className="p-3 text-center">Своими силами</td>
-                </tr>
-                <tr className="border-t bg-muted/20">
-                  <td className="p-3">Соответствие 152-ФЗ</td>
-                  <td className="p-3 text-center text-emerald-600">✅ Да</td>
-                  <td className="p-3 text-center">⚠️ Договор</td>
-                  <td className="p-3 text-center text-emerald-600">✅ Да</td>
-                </tr>
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Плюсы и минусы */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Card className="border-emerald-500/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-emerald-600">
-              <CheckCircle className="h-5 w-5" />
-              Преимущества закрытого контура
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                <span>Полный контроль над данными (152-ФЗ, гостайна)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                <span>Нет зависимости от внешних сервисов и санкций</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                <span>Низкая стоимость владения после окупаемости</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                <span>Возможность кастомизации под задачи компании</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                <span>Предсказуемые расходы (нет Pay-per-Use)</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-        <Card className="border-red-500/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-red-600">
-              <XCircle className="h-5 w-5" />
-              Недостатки закрытого контура
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-start gap-2">
-                <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <span>Высокие первоначальные инвестиции (CAPEX)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <span>Требуется квалифицированный персонал</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <span>Модель может устаревать без обновлений</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <span>Ограниченная масштабируемость железа</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <XCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <span>Ответственность за доступность на вас</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Рекомендация */}
       <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
         <CardContent className="p-6">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -1275,7 +961,6 @@ function OnPremiseComparison() {
         </CardContent>
       </Card>
 
-      {/* Ссылка */}
       <Card className="bg-muted/30">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -1302,6 +987,98 @@ export default function Home() {
   const [viewVariant, setViewVariant] = useState<'A' | 'B'>('A')
   const [searchQuery, setSearchQuery] = useState('')
   
+  // Состояние для данных из API
+  const [categories, setCategories] = useState<Category[]>([])
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Состояние для CRUD диалогов
+  const [formDialogOpen, setFormDialogOpen] = useState(false)
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingCompany, setDeletingCompany] = useState<Company | null>(null)
+
+  // Загрузка данных из API
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        
+        // Загружаем категории и компании параллельно
+        const [categoriesRes, companiesRes] = await Promise.all([
+          fetch('/api/categories'),
+          fetch('/api/companies?limit=200')
+        ])
+        
+        if (!categoriesRes.ok || !companiesRes.ok) {
+          throw new Error('Ошибка загрузки данных')
+        }
+        
+        const categoriesData = await categoriesRes.json()
+        const companiesData = await companiesRes.json()
+        
+        setCategories(categoriesData)
+        setCompanies(companiesData.companies || [])
+        setError(null)
+      } catch (err) {
+        console.error('Ошибка загрузки:', err)
+        setError('Не удалось загрузить данные')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadData()
+  }, [])
+
+  // CRUD: Откры form dialog
+  const openAddDialog = () => {
+    setFormDialogOpen(true)
+    setEditingCompany(null)
+  }
+
+  // CRUD: Open edit dialog
+  const openEditDialog = (company: Company) => {
+    setFormDialogOpen(true)
+    setEditingCompany(company)
+  }
+
+  // CRUD: Open delete dialog
+  const openDeleteDialog = (company: Company) => {
+    setDeleteDialogOpen(true)
+    setDeletingCompany(company)
+  }
+
+  // CRUD: Confirm delete
+  const handleDeleteConfirm = async () => {
+    if (!deletingCompany) return
+    
+    try {
+      const response = await fetch(`/api/companies/${deletingCompany.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Ошибка удаления')
+      }
+
+      // Refresh data
+      await loadData()
+      setDeleteDialogOpen(false)
+      setDeletingCompany(null)
+    } catch (err) {
+      console.error('Ошибка удаления:', err)
+    }
+  }
+
+  // CRUD: Refresh data after add/edit
+  const handleFormSuccess = () => {
+    loadData()
+    setFormDialogOpen(false)
+    setEditingCompany(null)
+  }
+
   // Функция проверки совпадения компании с поисковым запросом
   const companyMatchesSearch = (company: Company, query: string): boolean => {
     if (!query.trim()) return false
@@ -1314,6 +1091,25 @@ export default function Home() {
       !!(company.revenue && company.revenue.toLowerCase().includes(q))
     )
   }
+
+  // Преобразование данных в формат techData
+  const techData: Record<string, TechCategory> = {}
+  
+  categories.forEach(cat => {
+    const catCompanies = companies.filter(c => c.categoryId === cat.id)
+    const leaders = catCompanies.filter(c => c.status === 'leader')
+    const others = catCompanies.filter(c => c.status === 'active')
+    
+    techData[cat.key] = {
+      title: cat.title,
+      description: cat.description,
+      marketSize: cat.marketSize,
+      growth: cat.growth,
+      icon: iconMap[cat.iconName] || Brain,
+      leaders,
+      others
+    }
+  })
 
   // Определение вкладок с результатами поиска
   const getTabsWithResults = (query: string): string[] => {
@@ -1330,9 +1126,18 @@ export default function Home() {
   
   const tabsWithResults = getTabsWithResults(searchQuery)
   
-  const allLeaders = [...techData.llm.leaders, ...techData.audio.leaders, 
-    ...techData.video.leaders, ...techData.dl.leaders, ...techData.gen.leaders]
+  // Подсчёт уникальных лидеров
+  const allLeaders = Object.values(techData).flatMap(d => d.leaders)
   const uniqueCompanies = new Set(allLeaders.map(c => c.name)).size
+
+  // Состояние загрузки
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -1354,6 +1159,11 @@ export default function Home() {
                 <BarChart3 className="h-3 w-3 mr-1" />
                 Аналитика
               </Badge>
+              {/* Add Company Button */}
+              <Button onClick={openAddDialog} className="gap-2">
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Добавить</span>
+              </Button>
               {/* Search Bar */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1531,71 +1341,21 @@ export default function Home() {
 
             {/* Companies by Category */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    LLM / Чат-боты
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{techData.llm.leaders.length + techData.llm.others.length}</p>
-                  <p className="text-sm text-muted-foreground">компаний</p>
-                  <p className="text-xs text-emerald-600 mt-1">{techData.llm.leaders.length} лидеров</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Mic className="h-4 w-4" />
-                    Аудио-аналитика
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{techData.audio.leaders.length + techData.audio.others.length}</p>
-                  <p className="text-sm text-muted-foreground">компаний</p>
-                  <p className="text-xs text-emerald-600 mt-1">{techData.audio.leaders.length} лидеров</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Video className="h-4 w-4" />
-                    Видео-аналитика
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{techData.video.leaders.length + techData.video.others.length}</p>
-                  <p className="text-sm text-muted-foreground">компаний</p>
-                  <p className="text-xs text-emerald-600 mt-1">{techData.video.leaders.length} лидеров</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Brain className="h-4 w-4" />
-                    Deep Learning
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{techData.dl.leaders.length + techData.dl.others.length}</p>
-                  <p className="text-sm text-muted-foreground">компаний</p>
-                  <p className="text-xs text-emerald-600 mt-1">{techData.dl.leaders.length} лидеров</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Генеративный ИИ
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold">{techData.gen.leaders.length + techData.gen.others.length}</p>
-                  <p className="text-sm text-muted-foreground">компаний</p>
-                  <p className="text-xs text-emerald-600 mt-1">{techData.gen.leaders.length} лидеров</p>
-                </CardContent>
-              </Card>
+              {Object.entries(techData).map(([key, data]) => (
+                <Card key={key}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <data.icon className="h-4 w-4" />
+                      {data.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold">{data.leaders.length + data.others.length}</p>
+                    <p className="text-sm text-muted-foreground">компаний</p>
+                    <p className="text-xs text-emerald-600 mt-1">{data.leaders.length} лидеров</p>
+                  </CardContent>
+                </Card>
+              ))}
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base flex items-center gap-2">
@@ -1663,7 +1423,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {viewVariant === 'A' ? (
+              {techData[cat] && (viewVariant === 'A' ? (
                 <CategorySectionVariantA 
                   title={techData[cat].title}
                   description={techData[cat].description}
@@ -1674,6 +1434,8 @@ export default function Home() {
                   icon={techData[cat].icon}
                   searchQuery={searchQuery}
                   companyMatchesSearch={companyMatchesSearch}
+                  onEditCompany={openEditDialog}
+                  onDeleteCompany={openDeleteDialog}
                 />
               ) : (
                 <CategorySectionVariantB 
@@ -1686,8 +1448,10 @@ export default function Home() {
                   icon={techData[cat].icon}
                   searchQuery={searchQuery}
                   companyMatchesSearch={companyMatchesSearch}
+                  onEditCompany={openEditDialog}
+                  onDeleteCompany={openDeleteDialog}
                 />
-              )}
+              ))}
             </TabsContent>
           ))}
 
@@ -1714,11 +1478,28 @@ export default function Home() {
               </span>
             </div>
             <div className="text-sm text-muted-foreground">
-              Данные актуальны на {CURRENT_YEAR} год • {uniqueCompanies}+ лидеров
+              Данные актуальны на {CURRENT_YEAR} год • {uniqueCompanies}+ лидеров • Загружено из БД: {companies.length} компаний
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Company Form Dialog */}
+      <CompanyFormDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        company={editingCompany}
+        categories={categories}
+        onSuccess={handleFormSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        companyName={deletingCompany?.name || ''}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }
