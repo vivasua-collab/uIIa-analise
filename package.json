@@ -11,6 +11,7 @@
     "db:push": "prisma db push",
     "db:seed": "bun run prisma/seed.ts",
     "db:export": "bun run prisma/export-to-seed.ts",
+    "db:import": "bun run prisma/import-companies.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
