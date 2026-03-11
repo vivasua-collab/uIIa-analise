@@ -18,10 +18,11 @@
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4 + shadcn/ui |
 | Icons | Lucide React |
+| Runtime | Bun (рекомендуется) или Node.js 20+ |
 
 ---
 
-## Установка на Debian 12
+## Установка на чистую систему Debian 12
 
 ### 1. Подготовка системы
 
@@ -29,7 +30,10 @@
 # Обновление системы
 sudo apt update && sudo apt upgrade -y
 
-# Установка Node.js 20
+# Установка необходимых системных пакетов
+sudo apt install -y curl wget git build-essential
+
+# Установка Node.js 20 (опционально, если используете Node.js)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
@@ -38,7 +42,21 @@ curl -fsSL https://bun.sh/install | bash
 source ~/.bashrc
 ```
 
-### 2. Загрузка проекта с GitHub (ветка main2)
+### 2. Проверка установки
+
+```bash
+# Проверка Node.js (если установлен)
+node --version   # должно быть v20.x.x или выше
+npm --version    # должно быть 10.x.x или выше
+
+# Проверка Bun
+bun --version    # должно быть 1.x.x или выше
+
+# Проверка Git
+git --version
+```
+
+### 3. Загрузка проекта с GitHub (ветка main2)
 
 ```bash
 # Клонирование репозитория
@@ -47,18 +65,28 @@ cd uIIa-analise
 
 # Установка зависимостей
 bun install
+
+# Или через npm (если не установлен Bun)
+npm install
 ```
 
-### 3. Запуск
+### 4. Запуск
 
 ```bash
-# Режим разработки
+# Режим разработки (с авто-перезагрузкой)
 bun run dev
 
 # Продакшен сборка
 bun run build
 bun run start
+
+# Или через npm
+npm run dev
+npm run build
+npm run start
 ```
+
+Приложение будет доступно по адресу: http://localhost:3000
 
 ---
 
@@ -125,10 +153,13 @@ git log -1 --oneline
 
 ## Запуск как сервис systemd
 
+### Создание файла сервиса
+
 ```bash
-# Создание файла сервиса
 sudo nano /etc/systemd/system/uIIa-analise.service
 ```
+
+### Содержимое файла сервиса
 
 ```ini
 [Unit]
@@ -139,19 +170,74 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/var/www/uIIa-analise
-ExecStart=/usr/bin/bun run start
+ExecStart=/home/ВАШ_ПОЛЬЗОВАТЕЛЬ/.bun/bin/bun run start
 Restart=on-failure
 RestartSec=10
+Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target
 ```
 
+> **Важно:** Замените `ВАШ_ПОЛЬЗОВАТЕЛЬ` на реальное имя пользователя, у которого установлен Bun.
+
+### Активация сервиса
+
 ```bash
+# Создание директории (если её нет)
+sudo mkdir -p /var/www
+sudo chown www-data:www-data /var/www
+
+# Копирование проекта
+sudo cp -r /путь/к/uIIa-analise /var/www/uIIa-analise
+sudo chown -R www-data:www-data /var/www/uIIa-analise
+
 # Активация
 sudo systemctl daemon-reload
 sudo systemctl enable uIIa-analise
 sudo systemctl start uIIa-analise
+```
+
+---
+
+## Настройка Nginx (опционально)
+
+### Установка Nginx
+
+```bash
+sudo apt install -y nginx
+```
+
+### Конфигурация
+
+```bash
+sudo nano /etc/nginx/sites-available/uIIa-analise
+```
+
+### Содержимое конфигурации
+
+```nginx
+server {
+    listen 80;
+    server_name ваш-домен.ru;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+### Активация
+
+```bash
+sudo ln -s /etc/nginx/sites-available/uIIa-analise /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
 ---
@@ -175,6 +261,25 @@ sudo systemctl start uIIa-analise
 | Видео-аналитика | 10 | 6 |
 | Deep Learning | 12 | 6 |
 | Генеративный ИИ | 7 | 6 |
+
+---
+
+## Структура проекта
+
+```
+uIIa-analise/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx          # Главная страница
+│   │   ├── layout.tsx        # Layout
+│   │   └── globals.css       # Глобальные стили
+│   └── components/
+│       └── ui/               # shadcn/ui компоненты
+├── public/                   # Статические файлы
+├── tailwind.config.ts        # Конфигурация Tailwind
+├── package.json              # Зависимости
+└── README.md                 # Документация
+```
 
 ---
 

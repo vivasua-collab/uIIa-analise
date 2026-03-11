@@ -741,31 +741,34 @@ function CategorySectionVariantB({
                     </tr>
                   </thead>
                   <tbody>
-                    {others.map((company, idx) => (
-                      <tr key={idx} className="border-t hover:bg-muted/30">
-                        <td className="p-3">
-                          <div>
-                            <p className="font-medium text-sm">{company.name}</p>
-                            {company.revenue && <p className="text-xs text-muted-foreground">{company.revenue}</p>}
-                          </div>
-                        </td>
-                        <td className="p-3 hidden md:table-cell">
-                          <p className="text-sm text-muted-foreground line-clamp-1">{company.description}</p>
-                        </td>
-                        <td className="p-3 hidden lg:table-cell">
-                          <div className="flex gap-1 flex-wrap">
-                            {company.features.slice(0, 2).map((f, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs">{f}</Badge>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="p-3 text-right">
-                          <Button variant="ghost" size="sm" onClick={() => window.open(company.url, '_blank')}>
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {others.map((company, idx) => {
+                      const isHighlighted = companyMatchesSearch(company, searchQuery)
+                      return (
+                        <tr key={idx} className={`border-t hover:bg-muted/30 ${isHighlighted ? 'bg-orange-500/10 ring-1 ring-orange-500/50' : ''}`}>
+                          <td className="p-3">
+                            <div>
+                              <p className="font-medium text-sm">{company.name}</p>
+                              {company.revenue && <p className="text-xs text-muted-foreground">{company.revenue}</p>}
+                            </div>
+                          </td>
+                          <td className="p-3 hidden md:table-cell">
+                            <p className="text-sm text-muted-foreground line-clamp-1">{company.description}</p>
+                          </td>
+                          <td className="p-3 hidden lg:table-cell">
+                            <div className="flex gap-1 flex-wrap">
+                              {company.features.slice(0, 2).map((f, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs">{f}</Badge>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="p-3 text-right">
+                            <Button variant="ghost" size="sm" onClick={() => window.open(company.url, '_blank')}>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1673,6 +1676,8 @@ export default function Home() {
                   leaders={techData[cat].leaders}
                   others={techData[cat].others}
                   icon={techData[cat].icon}
+                  searchQuery={searchQuery}
+                  companyMatchesSearch={companyMatchesSearch}
                 />
               ) : (
                 <CategorySectionVariantB 
@@ -1683,6 +1688,8 @@ export default function Home() {
                   leaders={techData[cat].leaders}
                   others={techData[cat].others}
                   icon={techData[cat].icon}
+                  searchQuery={searchQuery}
+                  companyMatchesSearch={companyMatchesSearch}
                 />
               )}
             </TabsContent>
