@@ -200,44 +200,18 @@ sudo systemctl start uIIa-analise
 
 ---
 
-## Настройка Nginx (опционально)
+## Настройка Nginx и SSL (HTTPS)
 
-### Установка Nginx
+Подробная инструкция по настройке Nginx, получению SSL-сертификатов Let's Encrypt и настройке HTTPS находится в отдельном файле: **[SSL.md](./SSL.md)**
 
-```bash
-sudo apt install -y nginx
-```
-
-### Конфигурация
+### Кратко:
 
 ```bash
-sudo nano /etc/nginx/sites-available/uIIa-analise
-```
+# Установка Nginx и Certbot
+sudo apt install -y nginx certbot python3-certbot-nginx
 
-### Содержимое конфигурации
-
-```nginx
-server {
-    listen 80;
-    server_name ваш-домен.ru;
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-### Активация
-
-```bash
-sudo ln -s /etc/nginx/sites-available/uIIa-analise /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
+# Получение SSL-сертификата (автоматическая настройка)
+sudo certbot --nginx -d ваш-домен.ru
 ```
 
 ---
@@ -278,7 +252,9 @@ uIIa-analise/
 ├── public/                   # Статические файлы
 ├── tailwind.config.ts        # Конфигурация Tailwind
 ├── package.json              # Зависимости
-└── README.md                 # Документация
+├── README.md                 # Документация
+├── SSL.md                    # Инструкция по настройке HTTPS
+└── worklog.md                # История изменений
 ```
 
 ---
