@@ -704,21 +704,17 @@ function CategorySectionVariantB({
         </div>
       </div>
 
-      {/* Горизонтальный скролл лидеров */}
+      {/* Лидеры рынка - grid раскладка */}
       <div>
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Target className="h-5 w-5 text-emerald-600" />
           Лидеры рынка
         </h3>
-        <ScrollArea className="w-full">
-          <div className="flex gap-4 pb-4">
-            {leaders.map((company, idx) => (
-              <div key={idx} className="w-[280px] flex-shrink-0 h-full">
-                <LeaderCard company={company} isHighlighted={companyMatchesSearch(company, searchQuery)} />
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {leaders.map((company, idx) => (
+            <LeaderCard key={idx} company={company} isHighlighted={companyMatchesSearch(company, searchQuery)} />
+          ))}
+        </div>
       </div>
 
       {/* Остальные - таблица */}
