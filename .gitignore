@@ -9,6 +9,12 @@ out/
 # Build
 build/
 
+# Database (IMPORTANT: prevents data loss on git pull)
+db/*.db
+db/*.db-journal
+prisma/*.db
+prisma/*.db-journal
+
 # Environment
 .env*
 !.env.example

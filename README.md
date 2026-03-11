@@ -10,6 +10,8 @@
 - Анализ рисков ИИ-пузыря
 - Два режима отображения (Классический и Компактный)
 - База данных компаний (SQLite + Prisma)
+- CRUD операции с компаниями (добавление, редактирование)
+- Метка "Партнёр" для компаний
 
 ## Технологии
 
@@ -64,7 +66,7 @@ sqlite3 --version
 ### 3. Загрузка проекта с GitHub
 
 ```bash
-# Клонирование репозитория (ветка main3 - актуальная версия с БД)
+# Клонирование репозитория (ветка main3 - актуальная версия)
 git clone -b main3 https://github.com/vivasua-collab/uIIa-analise.git
 cd uIIa-analise
 
@@ -78,10 +80,10 @@ npm install
 ### 4. Инициализация базы данных
 
 ```bash
-# Создание базы данных и применение миграций
+# Создание базы данных и применение схемы
 bun run db:push
 
-# Заполнение базы начальными данными (компании)
+# Заполнение базы начальными данными (39 компаний)
 bun run db:seed
 
 # Или через npm
@@ -109,25 +111,76 @@ npm run start
 
 ---
 
-## Обновление проекта на локальном Debian
+## ⚠️ ВАЖНО: Сохранение данных при обновлении
+
+### Проблема
+База данных SQLite хранится в файле `db/custom.db`. По умолчанию этот файл **НЕ** попадает в Git (добавлен в `.gitignore`), что защищает ваши данные от перезаписи при `git pull`.
+
+### Перед обновлением ОБЯЗАТЕЛЬНО сделайте бэкап!
+
+```bash
+# Создание резервной копии базы данных
+cp db/custom.db db/custom.db.backup.$(date +%Y%m%d_%H%M%S)
+
+# Или выгрузка в SQL
+sqlite3 db/custom.db .dump > backup_$(date +%Y%m%d).sql
+```
+
+### Безопасное обновление проекта
+
+```bash
+cd /путь/к/uIIa-analise
+
+# 1. БЭКАП БАЗЫ ДАННЫХ (ОБЯЗАТЕЛЬНО!)
+cp db/custom.db db/custom.db.backup
+
+# 2. Сохранение локальных изменений (если есть)
+git stash
+
+# 3. Получение последних изменений
+git fetch origin main3
+git pull origin main3
+
+# 4. Обновление зависимостей
+bun install
+
+# 5. Применение миграций БД (если изменилась схема)
+bun run db:push
+
+# 6. Проверка, что база на месте
+ls -la db/custom.db
+
+# Если база пуста или отсутствует - восстановить из бэкапа:
+# cp db/custom.db.backup db/custom.db
+```
+
+### Структура файлов базы данных
+
+| Файл | Описание | В Git? |
+|------|----------|--------|
+| `db/custom.db` | Основная база данных | ❌ Нет (защищено) |
+| `db/*.db-journal` | Временные файлы SQLite | ❌ Нет |
+| `prisma/schema.prisma` | Схема базы данных | ✅ Да |
+| `prisma/seed.ts` | Начальные данные (39 компаний) | ✅ Да |
+
+---
+
+## Обновление проекта
 
 ### Быстрое обновление
 
 ```bash
 cd /путь/к/uIIa-analise
 
-# Сохранение локальных изменений (если есть)
-git stash
+# Бэкап базы!
+cp db/custom.db db/custom.db.backup
 
-# Получение последних изменений
-git fetch origin main3
-git checkout main3
+# Обновление кода
+git stash
 git pull origin main3
 
-# Обновление зависимостей
+# Обновление зависимостей и схемы
 bun install
-
-# Применение миграций БД (если есть новые)
 bun run db:push
 
 # Перезапуск (если запущен как сервис)
@@ -142,9 +195,11 @@ cd /путь/к/uIIa-analise
 # Остановка сервиса
 sudo systemctl stop uIIa-analise
 
+# БЭКАП БАЗЫ!
+cp db/custom.db db/custom.db.backup.$(date +%Y%m%d)
+
 # Обновление кода
 git fetch origin main3
-git checkout main3
 git pull origin main3
 
 # Очистка старой сборки
@@ -172,8 +227,33 @@ sudo journalctl -u uIIa-analise -f
 git log -1 --oneline
 
 # Проверка базы данных
-sqlite3 prisma/dev.db ".tables"
-sqlite3 prisma/dev.db "SELECT COUNT(*) FROM companies;"
+ls -la db/custom.db
+sqlite3 db/custom.db "SELECT COUNT(*) FROM Company;"
+sqlite3 db/custom.db "SELECT COUNT(*) FROM Company WHERE isPartner=1;"
+```
+
+---
+
+## Экспорт и импорт данных
+
+### Экспорт базы в SQL
+
+```bash
+# Полный дамп базы
+sqlite3 db/custom.db .dump > database_dump.sql
+
+# Только данные компаний (для переноса)
+sqlite3 db/custom.db "SELECT * FROM Company;" > companies_export.csv
+```
+
+### Импорт данных
+
+```bash
+# Восстановление из SQL дампа
+cat database_dump.sql | sqlite3 db/custom.db
+
+# Или из бэкапа
+cp db/custom.db.backup db/custom.db
 ```
 
 ---
@@ -257,11 +337,12 @@ sudo certbot --nginx -d ваш-домен.ru
 
 | Направление | Компаний | Лидеров |
 |-------------|----------|---------|
-| LLM / Чат-боты | 19 | 6 |
-| Аудио-аналитика | 8 | 6 |
-| Видео-аналитика | 10 | 6 |
+| LLM / Чат-боты | 11 | 2 |
+| Аудио-аналитика | 5 | 4 |
+| Видео-аналитика | 4 | 2 |
 | Deep Learning | 12 | 6 |
 | Генеративный ИИ | 7 | 6 |
+| **Итого уникальных** | **39** | **20** |
 
 ---
 
@@ -269,26 +350,32 @@ sudo certbot --nginx -d ваш-домен.ru
 
 ```
 uIIa-analise/
+├── db/
+│   └── custom.db              # База данных SQLite (НЕ в Git!)
 ├── prisma/
-│   ├── schema.prisma        # Схема базы данных
-│   ├── seed.ts              # Начальные данные
-│   └── dev.db               # База данных SQLite
+│   ├── schema.prisma          # Схема базы данных
+│   └── seed.ts                # Начальные данные (39 компаний)
 ├── src/
 │   ├── app/
-│   │   ├── api/             # API routes
-│   │   ├── page.tsx         # Главная страница
-│   │   ├── layout.tsx       # Layout
-│   │   └── globals.css      # Глобальные стили
+│   │   ├── api/               # API routes
+│   │   │   ├── categories/    # API категорий
+│   │   │   └── companies/     # API компаний (CRUD)
+│   │   ├── page.tsx           # Главная страница
+│   │   ├── layout.tsx         # Layout
+│   │   └── globals.css        # Глобальные стили
 │   ├── lib/
-│   │   └── db.ts            # Клиент Prisma
+│   │   └── db.ts              # Клиент Prisma
 │   └── components/
-│       └── ui/              # shadcn/ui компоненты
-├── public/                  # Статические файлы
-├── tailwind.config.ts       # Конфигурация Tailwind
-├── package.json             # Зависимости
-├── README.md                # Документация
-├── SSL.md                   # Инструкция по настройке HTTPS
-└── worklog.md               # История изменений
+│       ├── ui/                # shadcn/ui компоненты
+│       ├── CompanyFormDialog.tsx  # Форма редактирования
+│       └── DeleteConfirmDialog.tsx # Диалог удаления
+├── public/                    # Статические файлы
+├── tailwind.config.ts         # Конфигурация Tailwind
+├── package.json               # Зависимости
+├── README.md                  # Документация
+├── SSL.md                     # Инструкция по настройке HTTPS
+├── checkpoints_03_11.md       # Чекпоинты разработки
+└── worklog.md                 # История изменений
 ```
 
 ---
@@ -303,7 +390,46 @@ uIIa-analise/
 | `bun run lint` | Проверка кода ESLint |
 | `bun run db:push` | Применить схему Prisma к БД |
 | `bun run db:seed` | Заполнить БД начальными данными |
-| `bun run db:studio` | Открыть Prisma Studio |
+| `bun run db:studio` | Открыть Prisma Studio (GUI для БД) |
+
+---
+
+## Устранение неполадок
+
+### База данных пуста после обновления
+
+```bash
+# Проверить наличие бэкапа
+ls -la db/*.backup*
+
+# Восстановить из бэкапа
+cp db/custom.db.backup db/custom.db
+
+# Если бэкапа нет - пересоздать из seed
+bun run db:push
+bun run db:seed
+```
+
+### Ошибка "database is locked"
+
+```bash
+# Удалить journal файл
+rm -f db/custom.db-journal
+
+# Перезапустить приложение
+```
+
+### Ошибка Prisma после обновления схемы
+
+```bash
+# Перегенерировать клиент
+bun run db:push
+
+# Если не помогло - пересоздать БД (ВНИМАНИЕ: потеря данных!)
+rm db/custom.db
+bun run db:push
+bun run db:seed
+```
 
 ---
 
