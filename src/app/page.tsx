@@ -74,6 +74,7 @@ interface Company {
   revenue?: string
   alsoIn?: string[]
   categoryId: string
+  isPartner?: boolean
   category?: {
     id: string
     key: string
@@ -1468,13 +1469,17 @@ export default function Home() {
 
           {/* Manage Tab */}
           <TabsContent value="manage" className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-primary/10">
-                <Settings className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold">Управление компаниями</h2>
-                <p className="text-muted-foreground mt-1">Добавление и редактирование компаний в базе данных</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Settings className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Управление компаниями</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Всего: <span className="font-medium text-foreground">{companies.length}</span> компаний
+                  </p>
+                </div>
               </div>
               <Button onClick={openAddDialog} className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -1482,40 +1487,12 @@ export default function Home() {
               </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Всего компаний</p>
-                  <p className="text-2xl font-bold">{companies.length}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Лидеров</p>
-                  <p className="text-2xl font-bold text-emerald-600">{companies.filter(c => c.status === 'leader').length}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Активных</p>
-                  <p className="text-2xl font-bold">{companies.filter(c => c.status === 'active').length}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Категорий</p>
-                  <p className="text-2xl font-bold">{categories.length}</p>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Filter */}
             <Card>
               <CardContent className="p-4">
                 <div className="flex flex-wrap gap-4 items-center">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Фильтр:</span>
+                    <span className="text-sm text-muted-foreground">Категория:</span>
                     <select 
                       className="border rounded px-2 py-1 text-sm bg-background"
                       onChange={(e) => {
@@ -1523,11 +1500,11 @@ export default function Home() {
                         if (value) {
                           fetch(`/api/companies?categoryId=${value}`)
                             .then(res => res.json())
-                            .then(data => setCompanies(data.companies || data))
+                            .then(data => setCompanies(Array.isArray(data) ? data : (data.companies || [])))
                         } else {
                           fetch('/api/companies')
                             .then(res => res.json())
-                            .then(data => setCompanies(data.companies || data))
+                            .then(data => setCompanies(Array.isArray(data) ? data : (data.companies || [])))
                         }
                       }}
                     >
@@ -1546,11 +1523,11 @@ export default function Home() {
                         if (value) {
                           fetch(`/api/companies?status=${value}`)
                             .then(res => res.json())
-                            .then(data => setCompanies(data.companies || data))
+                            .then(data => setCompanies(Array.isArray(data) ? data : (data.companies || [])))
                         } else {
                           fetch('/api/companies')
                             .then(res => res.json())
-                            .then(data => setCompanies(data.companies || data))
+                            .then(data => setCompanies(Array.isArray(data) ? data : (data.companies || [])))
                         }
                       }}
                     >
@@ -1565,10 +1542,6 @@ export default function Home() {
 
             {/* Companies List */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Список компаний</CardTitle>
-                <CardDescription>Нажмите на компанию для редактирования</CardDescription>
-              </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -1586,10 +1559,15 @@ export default function Home() {
                       {companies.map((company) => (
                         <tr key={company.id} className="border-t hover:bg-muted/30 cursor-pointer" onClick={() => openEditDialog(company)}>
                           <td className="p-3">
-                            <div>
+                            <div className="flex items-center gap-2">
                               <p className="font-medium text-sm">{company.name}</p>
-                              <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{company.description}</p>
+                              {company.isPartner && (
+                                <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                                  Партнёр
+                                </Badge>
+                              )}
                             </div>
+                            <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{company.description}</p>
                           </td>
                           <td className="p-3 hidden md:table-cell">
                             <Badge variant="outline" className="text-xs">

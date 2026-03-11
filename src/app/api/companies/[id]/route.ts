@@ -43,11 +43,12 @@ export async function PUT(
         inn: data.inn || null,
         url: data.url,
         description: data.description,
-        features: data.features || [],
+        features: JSON.stringify(data.features || []),
         status: data.status || 'active',
         revenue: data.revenue || null,
-        alsoIn: data.alsoIn || [],
-        categoryId: data.categoryId
+        alsoIn: JSON.stringify(data.alsoIn || []),
+        categoryId: data.categoryId,
+        isPartner: data.isPartner || false,
       },
       include: {
         category: {

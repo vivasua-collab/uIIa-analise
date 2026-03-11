@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, X, Plus } from 'lucide-react'
+import { Loader2, X, Plus, Handshake } from 'lucide-react'
 
 // Типы
 interface Category {
@@ -41,6 +41,7 @@ interface Company {
   revenue?: string
   alsoIn?: string[]
   categoryId: string
+  isPartner?: boolean
 }
 
 interface CompanyFormDialogProps {
@@ -76,6 +77,7 @@ export function CompanyFormDialog({
   const [features, setFeatures] = useState<string[]>([])
   const [alsoIn, setAlsoIn] = useState<string[]>([])
   const [newFeature, setNewFeature] = useState('')
+  const [isPartner, setIsPartner] = useState(false)
 
   // Заполняем форму при редактировании
   useEffect(() => {
@@ -89,6 +91,7 @@ export function CompanyFormDialog({
       setCategoryId(company.categoryId)
       setFeatures(company.features || [])
       setAlsoIn(company.alsoIn || [])
+      setIsPartner(company.isPartner || false)
     } else {
       // Сброс формы для новой компании
       setName('')
@@ -100,6 +103,7 @@ export function CompanyFormDialog({
       setCategoryId(categories[0]?.id || '')
       setFeatures([])
       setAlsoIn([])
+      setIsPartner(false)
     }
     setError(null)
   }, [company, categories, open])
@@ -162,6 +166,7 @@ export function CompanyFormDialog({
         categoryId,
         features,
         alsoIn,
+        isPartner,
       }
 
       const response = await fetch(
@@ -337,6 +342,21 @@ export function CompanyFormDialog({
                 </Badge>
               ))}
             </div>
+          </div>
+
+          {/* Партнёр */}
+          <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+            <input
+              type="checkbox"
+              id="isPartner"
+              checked={isPartner}
+              onChange={(e) => setIsPartner(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isPartner" className="flex items-center gap-2 cursor-pointer">
+              <Handshake className="h-4 w-4 text-primary" />
+              Партнёр
+            </Label>
           </div>
 
           {/* Ошибка */}

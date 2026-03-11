@@ -39,10 +39,12 @@ model Company {
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
   isCustom    Boolean  @default(false)  // добавлена пользователем?
+  isPartner   Boolean  @default(false)  // является партнёром
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([categoryId])
   @@index([status])
   @@index([inn])
+  @@index([isPartner])
 }
