@@ -21,7 +21,12 @@ export async function GET(
       return NextResponse.json({ error: 'Company not found' }, { status: 404 })
     }
 
-    return NextResponse.json(company)
+    // Парсим JSON поля
+    return NextResponse.json({
+      ...company,
+      features: typeof company.features === 'string' ? JSON.parse(company.features) : company.features,
+      alsoIn: company.alsoIn ? (typeof company.alsoIn === 'string' ? JSON.parse(company.alsoIn) : company.alsoIn) : []
+    })
   } catch (error) {
     console.error('Error fetching company:', error)
     return NextResponse.json({ error: 'Failed to fetch company' }, { status: 500 })
@@ -46,7 +51,7 @@ export async function PUT(
         features: JSON.stringify(data.features || []),
         status: data.status || 'active',
         revenue: data.revenue || null,
-        alsoIn: JSON.stringify(data.alsoIn || []),
+        alsoIn: data.alsoIn ? JSON.stringify(data.alsoIn) : null,
         categoryId: data.categoryId,
         isPartner: data.isPartner || false,
       },
@@ -57,7 +62,12 @@ export async function PUT(
       }
     })
 
-    return NextResponse.json(company)
+    // Парсим для ответа
+    return NextResponse.json({
+      ...company,
+      features: typeof company.features === 'string' ? JSON.parse(company.features) : company.features,
+      alsoIn: company.alsoIn ? (typeof company.alsoIn === 'string' ? JSON.parse(company.alsoIn) : company.alsoIn) : []
+    })
   } catch (error) {
     console.error('Error updating company:', error)
     return NextResponse.json({ error: 'Failed to update company' }, { status: 500 })

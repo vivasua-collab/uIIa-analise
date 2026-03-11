@@ -21,8 +21,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { inn: { contains: search, mode: 'insensitive' } }
+        { description: { contains: search, mode: 'insensitive' } }
       ]
     }
 
@@ -34,12 +33,18 @@ export async function GET(request: NextRequest) {
         }
       },
       orderBy: [
-        { status: 'desc' },
         { name: 'asc' }
       ]
     })
 
-    return NextResponse.json(companies)
+    // Парсим JSON поля из строки в массив
+    const parsedCompanies = companies.map(c => ({
+      ...c,
+      features: typeof c.features === 'string' ? JSON.parse(c.features) : (c.features || []),
+      alsoIn: c.alsoIn ? (typeof c.alsoIn === 'string' ? JSON.parse(c.alsoIn) : c.alsoIn) : []
+    }))
+
+    return NextResponse.json(parsedCompanies)
   } catch (error) {
     console.error('Error fetching companies:', error)
     return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 })
@@ -59,7 +64,7 @@ export async function POST(request: NextRequest) {
         features: JSON.stringify(data.features || []),
         status: data.status || 'active',
         revenue: data.revenue || null,
-        alsoIn: JSON.stringify(data.alsoIn || []),
+        alsoIn: data.alsoIn ? JSON.stringify(data.alsoIn) : null,
         categoryId: data.categoryId,
         isPartner: data.isPartner || false,
       },
@@ -70,7 +75,12 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(company, { status: 201 })
+    // Парсим для ответа
+    return NextResponse.json({
+      ...company,
+      features: typeof company.features === 'string' ? JSON.parse(company.features) : company.features,
+      alsoIn: company.alsoIn ? (typeof company.alsoIn === 'string' ? JSON.parse(company.alsoIn) : company.alsoIn) : []
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating company:', error)
     return NextResponse.json({ error: 'Failed to create company' }, { status: 500 })
