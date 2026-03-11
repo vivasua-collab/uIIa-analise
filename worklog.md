@@ -67,3 +67,46 @@ Work Log:
 
 Stage Summary:
 - Подсветка теперь более заметна с оранжевым кольцом и тенью
+
+---
+Task ID: 6
+Agent: Main
+Task: Исправление передачи props и подсветка таблицы
+
+Work Log:
+- Обнаружено, что props searchQuery и companyMatchesSearch не передаются в компоненты CategorySectionVariantA и B
+- Добавлена передача props из главного компонента в оба варианта отображения
+- Добавлена подсветка строк таблицы "Другие игроки" в CategorySectionVariantB
+- Используется оранжевый цвет (bg-orange-500/10, ring-1 ring-orange-500/50)
+
+Stage Summary:
+- Подсветка поиска теперь работает для всех карточек компаний
+
+---
+Task ID: 7
+Agent: Main
+Task: Обновление README.md для Debian 12
+
+Work Log:
+- Добавлена полная инструкция установки на чистую Debian 12
+- Добавлены команды установки системных пакетов (curl, wget, git, build-essential)
+- Добавлена проверка установки компонентов
+- Добавлена инструкция по настройке Nginx
+- Добавлена структура проекта
+
+Stage Summary:
+- README.md содержит полную документацию для развёртывания
+
+---
+Task ID: 8
+Agent: Main
+Task: Публикация изменений на GitHub
+
+Work Log:
+- Проверен lint (без ошибок)
+- Добавлены файлы: README.md, page.tsx, worklog.md
+- Создан коммит с описанием изменений
+- Выполнен push в ветку main2
+
+Stage Summary:
+- Код успешно опубликован: https://github.com/vivasua-collab/uIIa-analise/tree/main2
