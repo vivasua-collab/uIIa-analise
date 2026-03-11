@@ -1,0 +1,48 @@
+// Prisma схема для аналитического портала ИИ
+// Дата создания: 2026-03-11
+// Версия: 1.0.0
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Категория технологий
+model Category {
+  id          String     @id @default(cuid())
+  key         String     @unique // llm, audio, video, dl, gen
+  title       String     // LLM (Чат-боты)
+  description String
+  marketSize  String
+  growth      String
+  iconName    String     // MessageSquare, Mic, Video, Brain, Sparkles
+  companies   Company[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Компания
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  inn         String?  @unique
+  url         String
+  description String
+  features    String   // JSON array: ["feature1", "feature2"]
+  status      String   @default("active") // "leader" или "active"
+  revenue     String?
+  alsoIn      String?  // JSON array: ["LLM", "Аудио"]
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  isCustom    Boolean  @default(false)  // добавлена пользователем?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([inn])
+}

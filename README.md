@@ -9,6 +9,7 @@
 - Расчёты развёртывания On-Premise решений
 - Анализ рисков ИИ-пузыря
 - Два режима отображения (Классический и Компактный)
+- База данных компаний (SQLite + Prisma)
 
 ## Технологии
 
@@ -17,6 +18,7 @@
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4 + shadcn/ui |
+| Database | Prisma ORM + SQLite |
 | Icons | Lucide React |
 | Runtime | Bun (рекомендуется) или Node.js 20+ |
 
@@ -31,7 +33,7 @@
 sudo apt update && sudo apt upgrade -y
 
 # Установка необходимых системных пакетов
-sudo apt install -y curl wget git build-essential
+sudo apt install -y curl wget git build-essential sqlite3 libsqlite3-dev
 
 # Установка Node.js 20 (опционально, если используете Node.js)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -54,13 +56,16 @@ bun --version    # должно быть 1.x.x или выше
 
 # Проверка Git
 git --version
+
+# Проверка SQLite
+sqlite3 --version
 ```
 
-### 3. Загрузка проекта с GitHub (ветка main2)
+### 3. Загрузка проекта с GitHub
 
 ```bash
-# Клонирование репозитория
-git clone -b main2 https://github.com/vivasua-collab/uIIa-analise.git
+# Клонирование репозитория (ветка main3 - актуальная версия с БД)
+git clone -b main3 https://github.com/vivasua-collab/uIIa-analise.git
 cd uIIa-analise
 
 # Установка зависимостей
@@ -70,7 +75,21 @@ bun install
 npm install
 ```
 
-### 4. Запуск
+### 4. Инициализация базы данных
+
+```bash
+# Создание базы данных и применение миграций
+bun run db:push
+
+# Заполнение базы начальными данными (компании)
+bun run db:seed
+
+# Или через npm
+npm run db:push
+npm run db:seed
+```
+
+### 5. Запуск
 
 ```bash
 # Режим разработки (с авто-перезагрузкой)
@@ -100,13 +119,16 @@ cd /путь/к/uIIa-analise
 # Сохранение локальных изменений (если есть)
 git stash
 
-# Получение последних изменений с ветки main2
-git fetch origin main2
-git checkout main2
-git pull origin main2
+# Получение последних изменений
+git fetch origin main3
+git checkout main3
+git pull origin main3
 
 # Обновление зависимостей
 bun install
+
+# Применение миграций БД (если есть новые)
+bun run db:push
 
 # Перезапуск (если запущен как сервис)
 sudo systemctl restart uIIa-analise
@@ -121,15 +143,16 @@ cd /путь/к/uIIa-analise
 sudo systemctl stop uIIa-analise
 
 # Обновление кода
-git fetch origin main2
-git checkout main2
-git pull origin main2
+git fetch origin main3
+git checkout main3
+git pull origin main3
 
 # Очистка старой сборки
 rm -rf .next node_modules
 
 # Переустановка и сборка
 bun install
+bun run db:push
 bun run build
 
 # Запуск сервиса
@@ -147,6 +170,10 @@ sudo journalctl -u uIIa-analise -f
 
 # Проверка версии
 git log -1 --oneline
+
+# Проверка базы данных
+sqlite3 prisma/dev.db ".tables"
+sqlite3 prisma/dev.db "SELECT COUNT(*) FROM companies;"
 ```
 
 ---
@@ -242,20 +269,41 @@ sudo certbot --nginx -d ваш-домен.ru
 
 ```
 uIIa-analise/
+├── prisma/
+│   ├── schema.prisma        # Схема базы данных
+│   ├── seed.ts              # Начальные данные
+│   └── dev.db               # База данных SQLite
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx          # Главная страница
-│   │   ├── layout.tsx        # Layout
-│   │   └── globals.css       # Глобальные стили
+│   │   ├── api/             # API routes
+│   │   ├── page.tsx         # Главная страница
+│   │   ├── layout.tsx       # Layout
+│   │   └── globals.css      # Глобальные стили
+│   ├── lib/
+│   │   └── db.ts            # Клиент Prisma
 │   └── components/
-│       └── ui/               # shadcn/ui компоненты
-├── public/                   # Статические файлы
-├── tailwind.config.ts        # Конфигурация Tailwind
-├── package.json              # Зависимости
-├── README.md                 # Документация
-├── SSL.md                    # Инструкция по настройке HTTPS
-└── worklog.md                # История изменений
+│       └── ui/              # shadcn/ui компоненты
+├── public/                  # Статические файлы
+├── tailwind.config.ts       # Конфигурация Tailwind
+├── package.json             # Зависимости
+├── README.md                # Документация
+├── SSL.md                   # Инструкция по настройке HTTPS
+└── worklog.md               # История изменений
 ```
+
+---
+
+## Полезные команды
+
+| Команда | Описание |
+|---------|----------|
+| `bun run dev` | Запуск в режиме разработки |
+| `bun run build` | Продакшен сборка |
+| `bun run start` | Запуск продакшен сервера |
+| `bun run lint` | Проверка кода ESLint |
+| `bun run db:push` | Применить схему Prisma к БД |
+| `bun run db:seed` | Заполнить БД начальными данными |
+| `bun run db:studio` | Открыть Prisma Studio |
 
 ---
 
