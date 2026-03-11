@@ -38,7 +38,10 @@ import {
   Loader2,
   Plus,
   Pencil,
-  Trash2
+  Trash2,
+  Settings,
+  Check,
+  ArrowUpDown
 } from 'lucide-react'
 
 // Текущий год
@@ -1019,7 +1022,7 @@ export default function Home() {
         const companiesData = await companiesRes.json()
         
         setCategories(categoriesData)
-        setCompanies(companiesData.companies || [])
+        setCompanies(Array.isArray(companiesData) ? companiesData : (companiesData.companies || []))
         setError(null)
       } catch (err) {
         console.error('Ошибка загрузки:', err)
@@ -1159,11 +1162,7 @@ export default function Home() {
                 <BarChart3 className="h-3 w-3 mr-1" />
                 Аналитика
               </Badge>
-              {/* Add Company Button */}
-              <Button onClick={openAddDialog} className="gap-2">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Добавить</span>
-              </Button>
+              {/* Add Company Button - moved to Manage tab */}
               {/* Search Bar */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1239,6 +1238,10 @@ export default function Home() {
               <TabsTrigger value="risks" className="flex items-center gap-2 py-2 px-3">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Риски</span>
+              </TabsTrigger>
+              <TabsTrigger value="manage" className="flex items-center gap-2 py-2 px-3">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Управление</span>
               </TabsTrigger>
             </TabsList>
           </ScrollArea>
@@ -1435,7 +1438,6 @@ export default function Home() {
                   searchQuery={searchQuery}
                   companyMatchesSearch={companyMatchesSearch}
                   onEditCompany={openEditDialog}
-                  onDeleteCompany={openDeleteDialog}
                 />
               ) : (
                 <CategorySectionVariantB 
@@ -1449,7 +1451,6 @@ export default function Home() {
                   searchQuery={searchQuery}
                   companyMatchesSearch={companyMatchesSearch}
                   onEditCompany={openEditDialog}
-                  onDeleteCompany={openDeleteDialog}
                 />
               ))}
             </TabsContent>
@@ -1463,6 +1464,168 @@ export default function Home() {
           {/* Risks Tab */}
           <TabsContent value="risks">
             <BubbleRiskBlock />
+          </TabsContent>
+
+          {/* Manage Tab */}
+          <TabsContent value="manage" className="space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-primary/10">
+                <Settings className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold">Управление компаниями</h2>
+                <p className="text-muted-foreground mt-1">Добавление и редактирование компаний в базе данных</p>
+              </div>
+              <Button onClick={openAddDialog} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Добавить компанию
+              </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Всего компаний</p>
+                  <p className="text-2xl font-bold">{companies.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Лидеров</p>
+                  <p className="text-2xl font-bold text-emerald-600">{companies.filter(c => c.status === 'leader').length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Активных</p>
+                  <p className="text-2xl font-bold">{companies.filter(c => c.status === 'active').length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">Категорий</p>
+                  <p className="text-2xl font-bold">{categories.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filter */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex flex-wrap gap-4 items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Фильтр:</span>
+                    <select 
+                      className="border rounded px-2 py-1 text-sm bg-background"
+                      onChange={(e) => {
+                        const value = e.target.value
+                        if (value) {
+                          fetch(`/api/companies?categoryId=${value}`)
+                            .then(res => res.json())
+                            .then(data => setCompanies(data.companies || data))
+                        } else {
+                          fetch('/api/companies')
+                            .then(res => res.json())
+                            .then(data => setCompanies(data.companies || data))
+                        }
+                      }}
+                    >
+                      <option value="">Все категории</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Статус:</span>
+                    <select 
+                      className="border rounded px-2 py-1 text-sm bg-background"
+                      onChange={(e) => {
+                        const value = e.target.value
+                        if (value) {
+                          fetch(`/api/companies?status=${value}`)
+                            .then(res => res.json())
+                            .then(data => setCompanies(data.companies || data))
+                        } else {
+                          fetch('/api/companies')
+                            .then(res => res.json())
+                            .then(data => setCompanies(data.companies || data))
+                        }
+                      }}
+                    >
+                      <option value="">Все</option>
+                      <option value="leader">Лидеры</option>
+                      <option value="active">Активные</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Companies List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Список компаний</CardTitle>
+                <CardDescription>Нажмите на компанию для редактирования</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-3 text-sm font-medium">Компания</th>
+                        <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Категория</th>
+                        <th className="text-left p-3 text-sm font-medium hidden lg:table-cell">ИНН</th>
+                        <th className="text-left p-3 text-sm font-medium">Статус</th>
+                        <th className="text-left p-3 text-sm font-medium hidden sm:table-cell">Выручка</th>
+                        <th className="p-3 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {companies.map((company) => (
+                        <tr key={company.id} className="border-t hover:bg-muted/30 cursor-pointer" onClick={() => openEditDialog(company)}>
+                          <td className="p-3">
+                            <div>
+                              <p className="font-medium text-sm">{company.name}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{company.description}</p>
+                            </div>
+                          </td>
+                          <td className="p-3 hidden md:table-cell">
+                            <Badge variant="outline" className="text-xs">
+                              {company.category?.title || '-'}
+                            </Badge>
+                          </td>
+                          <td className="p-3 hidden lg:table-cell">
+                            <span className="text-sm text-muted-foreground">{company.inn || '-'}</span>
+                          </td>
+                          <td className="p-3">
+                            <Badge variant={company.status === 'leader' ? 'default' : 'secondary'} className="text-xs">
+                              {company.status === 'leader' ? 'Лидер' : 'Активный'}
+                            </Badge>
+                          </td>
+                          <td className="p-3 hidden sm:table-cell">
+                            <span className="text-sm">{company.revenue || '-'}</span>
+                          </td>
+                          <td className="p-3 text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openEditDialog(company)
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
