@@ -1193,55 +1193,82 @@ export default function Home() {
       <main className="flex-1 container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <ScrollArea className="w-full">
-            <TabsList className="grid w-max grid-cols-8 h-auto gap-1 p-1">
-              <TabsTrigger value="overview" className="flex items-center gap-2 py-2 px-3">
+            <TabsList className="bg-transparent gap-2 p-0 h-auto">
+              <TabsTrigger 
+                value="overview" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all"
+              >
                 <BarChart3 className="h-4 w-4" />
                 <span className="hidden sm:inline">Обзор</span>
               </TabsTrigger>
-              <TabsTrigger value="llm" className="flex items-center gap-2 py-2 px-3 relative">
+              <TabsTrigger 
+                value="llm" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all relative"
+              >
                 <MessageSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">LLM</span>
                 {tabsWithResults.includes('llm') && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full" />
                 )}
               </TabsTrigger>
-              <TabsTrigger value="audio" className="flex items-center gap-2 py-2 px-3 relative">
+              <TabsTrigger 
+                value="audio" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all relative"
+              >
                 <Mic className="h-4 w-4" />
                 <span className="hidden sm:inline">Аудио</span>
                 {tabsWithResults.includes('audio') && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full" />
                 )}
               </TabsTrigger>
-              <TabsTrigger value="video" className="flex items-center gap-2 py-2 px-3 relative">
+              <TabsTrigger 
+                value="video" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all relative"
+              >
                 <Video className="h-4 w-4" />
                 <span className="hidden sm:inline">Видео</span>
                 {tabsWithResults.includes('video') && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full" />
                 )}
               </TabsTrigger>
-              <TabsTrigger value="dl" className="flex items-center gap-2 py-2 px-3 relative">
+              <TabsTrigger 
+                value="dl" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all relative"
+              >
                 <Brain className="h-4 w-4" />
                 <span className="hidden sm:inline">DL</span>
                 {tabsWithResults.includes('dl') && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full" />
                 )}
               </TabsTrigger>
-              <TabsTrigger value="gen" className="flex items-center gap-2 py-2 px-3 relative">
+              <TabsTrigger 
+                value="gen" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all relative"
+              >
                 <Sparkles className="h-4 w-4" />
                 <span className="hidden sm:inline">Генерация</span>
                 {tabsWithResults.includes('gen') && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full" />
                 )}
               </TabsTrigger>
-              <TabsTrigger value="compare" className="flex items-center gap-2 py-2 px-3">
+              <TabsTrigger 
+                value="compare" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all"
+              >
                 <Calculator className="h-4 w-4" />
                 <span className="hidden sm:inline">Сравнение</span>
               </TabsTrigger>
-              <TabsTrigger value="risks" className="flex items-center gap-2 py-2 px-3">
+              <TabsTrigger 
+                value="risks" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all"
+              >
                 <AlertTriangle className="h-4 w-4" />
                 <span className="hidden sm:inline">Риски</span>
               </TabsTrigger>
-              <TabsTrigger value="manage" className="flex items-center gap-2 py-2 px-3">
+              <TabsTrigger 
+                value="manage" 
+                className="flex items-center gap-2 py-2 px-4 rounded-lg border border-border bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm transition-all"
+              >
                 <Settings className="h-4 w-4" />
                 <span className="hidden sm:inline">Управление</span>
               </TabsTrigger>
