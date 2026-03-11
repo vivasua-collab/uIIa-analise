@@ -450,7 +450,7 @@ function LeaderCard({ company, isHighlighted }: { company: Company; isHighlighte
   return (
     <Card 
       className={`group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 h-full flex flex-col
-        ${isHighlighted ? 'ring-2 ring-yellow-500 bg-yellow-500/5' : ''}`}
+        ${isHighlighted ? 'ring-2 ring-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/30' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -524,7 +524,7 @@ function LeaderCard({ company, isHighlighted }: { company: Company; isHighlighte
 function MiniCard({ company, isHighlighted }: { company: Company; isHighlighted?: boolean }) {
   return (
     <Card className={`group hover:shadow-md transition-all duration-200 hover:border-primary/30 h-full flex flex-col
-      ${isHighlighted ? 'ring-2 ring-yellow-500 bg-yellow-500/5' : ''}`}>
+      ${isHighlighted ? 'ring-2 ring-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/30' : ''}`}>
       <CardContent className="p-3 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
