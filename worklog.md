@@ -129,3 +129,32 @@ Work Log:
 
 Stage Summary:
 - Создан SSL.md, обновлён README.md, изменения опубликованы на GitHub
+
+---
+Task ID: 10
+Agent: Main
+Task: Исправление бага компактного режима
+
+Work Log:
+- Обнаружен ScrollArea с horizontal scroll в CategorySectionVariantB
+- Заменён на grid-раскладку как в CategorySectionVariantA
+- Карточки лидеров теперь корректно переносятся
+
+Stage Summary:
+- Компактный режим исправлен, lint пройден, код на GitHub
+
+---
+Task ID: 11
+Agent: Main
+Task: Архитектура новых функций (roadmap.md)
+
+Work Log:
+- Создан файл checkpoints.md для планирования
+- Спроектирована Prisma схема (Company, Comment, Tag, CompanyTag)
+- Спроектированы API routes
+- Созданы UI/UX концепции
+- Декомпозированы задачи по фазам
+- Оценено время реализации
+
+Stage Summary:
+- Создан roadmap.md с полной архитектурой, задачи не запускались в работу
