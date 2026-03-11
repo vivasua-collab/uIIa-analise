@@ -110,3 +110,22 @@ Work Log:
 
 Stage Summary:
 - Код успешно опубликован: https://github.com/vivasua-collab/uIIa-analise/tree/main2
+
+---
+Task ID: 9
+Agent: Main
+Task: Создание инструкции по настройке SSL (HTTPS)
+
+Work Log:
+- Создан файл SSL.md с полной инструкцией по настройке HTTPS
+- Добавлена установка Nginx и Certbot
+- Добавлена инструкция получения SSL-сертификатов Let's Encrypt
+- Добавлена ручная настройка SSL в Nginx
+- Добавлено автообновление сертификатов
+- Добавлено устранение неполадок
+- Добавлены дополнительные настройки безопасности
+- Раздел Nginx из README.md перенесён в SSL.md
+- Обновлена структура проекта в README.md
+
+Stage Summary:
+- Создан SSL.md, обновлён README.md, изменения опубликованы на GitHub
