@@ -27,27 +27,31 @@ model Category {
 
 // Компания
 model Company {
-  id          String     @id @default(cuid())
-  name        String
-  inn         String?  @unique
-  url         String
-  description String
-  features    String   // JSON array: ["feature1", "feature2"]
-  status      String   @default("active") // "leader" или "active"
-  revenue     String?
-  alsoIn      String?  // JSON array: ["LLM", "Аудио"]
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  isCustom    Boolean  @default(false)  // добавлена пользователем?
-  isPartner   Boolean  @default(false)  // является партнёром
-  comments    Comment[] // комментарии к компании
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String     @id @default(cuid())
+  name            String
+  inn             String?    @unique  // ИНН (только цифры)
+  url             String
+  description     String
+  features        String     // JSON array: ["feature1", "feature2"]
+  status          String     @default("active") // "leader" или "active"
+  revenue         String?
+  alsoIn          String?    // JSON array: ["LLM", "Аудио"]
+  categoryId      String
+  category        Category   @relation(fields: [categoryId], references: [id])
+  parentCompanyId String?    // ID материнской компании
+  parentCompany   Company?   @relation("CompanyHierarchy", fields: [parentCompanyId], references: [id])
+  subsidiaries    Company[]  @relation("CompanyHierarchy")
+  isCustom        Boolean    @default(false)  // добавлена пользователем?
+  isPartner       Boolean    @default(false)  // является партнёром
+  comments        Comment[]  // комментарии к компании
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([categoryId])
   @@index([status])
   @@index([inn])
   @@index([isPartner])
+  @@index([parentCompanyId])
 }
 
 // Комментарий к компании

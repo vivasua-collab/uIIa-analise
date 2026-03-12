@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// Функция для проверки валидности ИНН (только цифры)
+function isValidInn(inn: string | null | undefined): inn is string {
+  if (!inn) return false
+  return /^\d+$/.test(inn)
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -31,6 +37,12 @@ export async function GET(request: NextRequest) {
         category: {
           select: { id: true, key: true, title: true, iconName: true }
         },
+        parentCompany: {
+          select: { id: true, name: true, inn: true }
+        },
+        subsidiaries: {
+          select: { id: true, name: true, inn: true }
+        },
         _count: {
           select: { comments: true }
         }
@@ -40,26 +52,54 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    // Получаем все комментарии и группируем по названию компании
+    // Получаем все компании для группировки комментариев
     const allCompanies = await db.company.findMany({
-      select: { id: true, name: true }
+      select: { id: true, name: true, inn: true }
     })
     
-    const companyNameToIds: Record<string, string[]> = {}
+    // Группируем компании по ИНН (приоритет) и по имени
+    const innToIds: Map<string, string[]> = new Map()
+    const nameToIds: Map<string, string[]> = new Map()
+    
     for (const c of allCompanies) {
-      if (!companyNameToIds[c.name]) {
-        companyNameToIds[c.name] = []
+      // Группируем по валидному ИНН
+      if (isValidInn(c.inn)) {
+        if (!innToIds.has(c.inn)) {
+          innToIds.set(c.inn, [])
+        }
+        innToIds.get(c.inn)!.push(c.id)
       }
-      companyNameToIds[c.name].push(c.id)
+      // Группируем по имени
+      if (!nameToIds.has(c.name)) {
+        nameToIds.set(c.name, [])
+      }
+      nameToIds.get(c.name)!.push(c.id)
     }
 
-    // Получаем количество комментариев для каждой группы названий
-    const commentCounts: Record<string, number> = {}
-    for (const [name, ids] of Object.entries(companyNameToIds)) {
+    // Функция для получения ID связанных компаний
+    const getLinkedIds = (companyId: string, name: string, inn: string | null): string[] => {
+      if (isValidInn(inn)) {
+        return innToIds.get(inn) || [companyId]
+      }
+      return nameToIds.get(name) || [companyId]
+    }
+
+    // Получаем количество комментариев для каждой группы
+    const commentCounts: Map<string, number> = new Map()
+    
+    for (const c of allCompanies) {
+      const key = c.id
+      if (commentCounts.has(key)) continue
+      
+      const linkedIds = getLinkedIds(c.id, c.name, c.inn)
       const count = await db.comment.count({
-        where: { companyId: { in: ids } }
+        where: { companyId: { in: linkedIds } }
       })
-      commentCounts[name] = count
+      
+      // Сохраняем счётчик для всех связанных компаний
+      for (const id of linkedIds) {
+        commentCounts.set(id, count)
+      }
     }
 
     // Парсим JSON поля и обновляем счётчик комментариев
@@ -68,7 +108,7 @@ export async function GET(request: NextRequest) {
       features: typeof c.features === 'string' ? JSON.parse(c.features) : (c.features || []),
       alsoIn: c.alsoIn ? (typeof c.alsoIn === 'string' ? JSON.parse(c.alsoIn) : c.alsoIn) : [],
       _count: {
-        comments: commentCounts[c.name] || 0
+        comments: commentCounts.get(c.id) || 0
       }
     }))
 
@@ -83,10 +123,13 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
 
+    // Проверяем валидность ИНН
+    const validInn = isValidInn(data.inn) ? data.inn : null
+
     const company = await db.company.create({
       data: {
         name: data.name,
-        inn: data.inn || null,
+        inn: validInn,
         url: data.url,
         description: data.description,
         features: JSON.stringify(data.features || []),
@@ -95,10 +138,14 @@ export async function POST(request: NextRequest) {
         alsoIn: data.alsoIn ? JSON.stringify(data.alsoIn) : null,
         categoryId: data.categoryId,
         isPartner: data.isPartner || false,
+        parentCompanyId: data.parentCompanyId || null,
       },
       include: {
         category: {
           select: { id: true, key: true, title: true, iconName: true }
+        },
+        parentCompany: {
+          select: { id: true, name: true, inn: true }
         }
       }
     })

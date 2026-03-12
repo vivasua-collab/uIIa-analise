@@ -77,6 +77,17 @@ interface Company {
   alsoIn?: string[]
   categoryId: string
   isPartner?: boolean
+  parentCompanyId?: string | null
+  parentCompany?: {
+    id: string
+    name: string
+    inn?: string
+  }
+  subsidiaries?: {
+    id: string
+    name: string
+    inn?: string
+  }[]
   _count?: {
     comments: number
   }
@@ -169,6 +180,11 @@ function LeaderCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <CardTitle className="text-xl font-bold truncate">{company.name}</CardTitle>
+              {company.parentCompany && (
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
+                  {company.parentCompany.name}
+                </Badge>
+              )}
               {company.isPartner && (
                 <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 text-xs">
                   Партнёр
@@ -274,6 +290,11 @@ function MiniCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               <h4 className="font-medium text-sm truncate">{company.name}</h4>
+              {company.parentCompany && (
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] px-1">
+                  {company.parentCompany.name}
+                </Badge>
+              )}
               {company.isPartner && (
                 <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 text-[10px] px-1">
                   P
@@ -537,6 +558,11 @@ function CategorySectionVariantB({
                           <td className="p-3">
                             <div className="flex items-center gap-2">
                               <p className="font-medium text-sm">{company.name}</p>
+                              {company.parentCompany && (
+                                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                                  {company.parentCompany.name}
+                                </Badge>
+                              )}
                               {company.isPartner && (
                                 <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 text-[10px]">
                                   Партнёр
@@ -1603,6 +1629,11 @@ export default function Home() {
                           <td className="p-3">
                             <div className="flex items-center gap-2">
                               <p className="font-medium text-sm">{company.name}</p>
+                              {company.parentCompany && (
+                                <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                                  {company.parentCompany.name}
+                                </Badge>
+                              )}
                               {company.isPartner && (
                                 <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
                                   Партнёр
@@ -1673,6 +1704,7 @@ export default function Home() {
         onOpenChange={setFormDialogOpen}
         company={editingCompany}
         categories={categories}
+        parentCompanies={companies.filter(c => !c.parentCompanyId && c.inn).slice(0, 20)}
         onSuccess={handleFormSuccess}
       />
 

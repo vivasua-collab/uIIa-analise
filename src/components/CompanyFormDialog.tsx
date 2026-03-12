@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, X, Plus, Handshake } from 'lucide-react'
+import { Loader2, X, Plus, Handshake, Building2 } from 'lucide-react'
 
 // Типы
 interface Category {
@@ -42,6 +42,11 @@ interface Company {
   alsoIn?: string[]
   categoryId: string
   isPartner?: boolean
+  parentCompanyId?: string | null
+  parentCompany?: {
+    id: string
+    name: string
+  }
 }
 
 interface CompanyFormDialogProps {
@@ -49,6 +54,7 @@ interface CompanyFormDialogProps {
   onOpenChange: (open: boolean) => void
   company?: Company | null
   categories: Category[]
+  parentCompanies?: Company[]  // Список материнских компаний
   onSuccess: () => void
 }
 
@@ -60,6 +66,7 @@ export function CompanyFormDialog({
   onOpenChange,
   company,
   categories,
+  parentCompanies = [],
   onSuccess,
 }: CompanyFormDialogProps) {
   const isEdit = !!company
@@ -78,6 +85,7 @@ export function CompanyFormDialog({
   const [alsoIn, setAlsoIn] = useState<string[]>([])
   const [newFeature, setNewFeature] = useState('')
   const [isPartner, setIsPartner] = useState(false)
+  const [parentCompanyId, setParentCompanyId] = useState<string>('')
 
   // Заполняем форму при редактировании
   useEffect(() => {
@@ -92,6 +100,7 @@ export function CompanyFormDialog({
       setFeatures(company.features || [])
       setAlsoIn(company.alsoIn || [])
       setIsPartner(company.isPartner || false)
+      setParentCompanyId(company.parentCompanyId || '')
     } else {
       // Сброс формы для новой компании
       setName('')
@@ -104,6 +113,7 @@ export function CompanyFormDialog({
       setFeatures([])
       setAlsoIn([])
       setIsPartner(false)
+      setParentCompanyId('')
     }
     setError(null)
   }, [company, categories, open])
@@ -153,12 +163,21 @@ export function CompanyFormDialog({
       return
     }
 
+    // Проверка ИНН - только цифры
+    const trimmedInn = inn.trim()
+    const validInn = trimmedInn && /^\d+$/.test(trimmedInn) ? trimmedInn : null
+    
+    if (trimmedInn && !validInn) {
+      setError('ИНН должен содержать только цифры')
+      return
+    }
+
     setLoading(true)
 
     try {
       const body = {
         name: name.trim(),
-        inn: inn.trim() || null,
+        inn: validInn,
         url: url.trim(),
         description: description.trim(),
         status,
@@ -167,6 +186,7 @@ export function CompanyFormDialog({
         features,
         alsoIn,
         isPartner,
+        parentCompanyId: parentCompanyId || null,
       }
 
       const response = await fetch(
@@ -221,11 +241,11 @@ export function CompanyFormDialog({
           {/* ИНН и Выручка */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="inn">ИНН</Label>
+              <Label htmlFor="inn">ИНН (только цифры)</Label>
               <Input
                 id="inn"
                 value={inn}
-                onChange={(e) => setInn(e.target.value)}
+                onChange={(e) => setInn(e.target.value.replace(/[^\d]/g, ''))}
                 placeholder="1234567890"
               />
             </div>
@@ -296,6 +316,29 @@ export function CompanyFormDialog({
               </Select>
             </div>
           </div>
+
+          {/* Материнская компания */}
+          {parentCompanies.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Материнская компания (экосистема)
+              </Label>
+              <Select value={parentCompanyId} onValueChange={setParentCompanyId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Без материнской компании" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Без материнской компании</SelectItem>
+                  {parentCompanies.map((pc) => (
+                    <SelectItem key={pc.id} value={pc.id}>
+                      {pc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Особенности/Технологии */}
           <div className="space-y-2">

@@ -60,10 +60,14 @@ export async function PUT(
         alsoIn: data.alsoIn ? JSON.stringify(data.alsoIn) : null,
         categoryId: data.categoryId,
         isPartner: data.isPartner || false,
+        parentCompanyId: data.parentCompanyId || null,
       },
       include: {
         category: {
           select: { id: true, key: true, title: true, iconName: true }
+        },
+        parentCompany: {
+          select: { id: true, name: true, inn: true }
         }
       }
     })

@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// Функция для проверки валидности ИНН (только цифры)
+function isValidInn(inn: string | null | undefined): inn is string {
+  if (!inn) return false
+  return /^\d+$/.test(inn)
+}
+
 // GET /api/comments?companyId=xxx - получить комментарии компании
-// Комментарии объединяются по имени компании (одна компания в разных категориях)
+// Комментарии объединяются: сначала по ИНН (если валиден), потом по имени
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -12,25 +18,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'companyId is required' }, { status: 400 })
     }
 
-    // Получаем компанию, чтобы узнать её имя
+    // Получаем компанию, чтобы узнать её имя и ИНН
     const company = await db.company.findUnique({
       where: { id: companyId },
-      select: { name: true }
+      select: { name: true, inn: true }
     })
 
     if (!company) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 })
     }
 
-    // Находим все ID компаний с таким же названием
-    const sameCompanies = await db.company.findMany({
-      where: { name: company.name },
-      select: { id: true }
-    })
-    
-    const companyIds = sameCompanies.map(c => c.id)
+    let companyIds: string[] = []
 
-    // Получаем комментарии для всех компаний с таким названием
+    // Приоритет связывания: сначала по ИНН, потом по имени
+    if (isValidInn(company.inn)) {
+      // Связываем по ИНН
+      const sameInnCompanies = await db.company.findMany({
+        where: { inn: company.inn },
+        select: { id: true }
+      })
+      companyIds = sameInnCompanies.map(c => c.id)
+      console.log(`[Comments API] Найдено ${companyIds.length} компаний по ИНН: ${company.inn}`)
+    } else {
+      // ИНН нет или невалиден - связываем по имени
+      const sameNameCompanies = await db.company.findMany({
+        where: { name: company.name },
+        select: { id: true }
+      })
+      companyIds = sameNameCompanies.map(c => c.id)
+      console.log(`[Comments API] Найдено ${companyIds.length} компаний по имени: ${company.name}`)
+    }
+
+    // Получаем комментарии для всех найденных компаний
     const comments = await db.comment.findMany({
       where: { companyId: { in: companyIds } },
       orderBy: { createdAt: 'desc' }
@@ -44,30 +63,43 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/comments - создать комментарий
-// Комментарий создаётся для ВСЕХ компаний с таким же названием
+// Комментарий создаётся для ВСЕХ компаний с таким же ИНН (приоритет) или именем
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
 
-    // Получаем компанию, чтобы узнать её имя
+    // Получаем компанию, чтобы узнать её имя и ИНН
     const company = await db.company.findUnique({
       where: { id: data.companyId },
-      select: { name: true }
+      select: { name: true, inn: true }
     })
 
     if (!company) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 })
     }
 
-    // Находим все ID компаний с таким же названием
-    const sameCompanies = await db.company.findMany({
-      where: { name: company.name },
-      select: { id: true }
-    })
-    
-    const companyIds = sameCompanies.map(c => c.id)
+    let companyIds: string[] = []
 
-    // Создаём комментарий для каждой компании с таким названием
+    // Приоритет связывания: сначала по ИНН, потом по имени
+    if (isValidInn(company.inn)) {
+      // Связываем по ИНН
+      const sameInnCompanies = await db.company.findMany({
+        where: { inn: company.inn },
+        select: { id: true }
+      })
+      companyIds = sameInnCompanies.map(c => c.id)
+      console.log(`[Comments API] Создание комментария для ${companyIds.length} компаний по ИНН: ${company.inn}`)
+    } else {
+      // ИНН нет или невалиден - связываем по имени
+      const sameNameCompanies = await db.company.findMany({
+        where: { name: company.name },
+        select: { id: true }
+      })
+      companyIds = sameNameCompanies.map(c => c.id)
+      console.log(`[Comments API] Создание комментария для ${companyIds.length} компаний по имени: ${company.name}`)
+    }
+
+    // Создаём комментарий для каждой найденной компании
     const comments = await Promise.all(
       companyIds.map(id => 
         db.comment.create({
