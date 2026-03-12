@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
       include: {
         category: {
           select: { id: true, key: true, title: true, iconName: true }
+        },
+        _count: {
+          select: { comments: true }
         }
       },
       orderBy: [

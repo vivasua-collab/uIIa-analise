@@ -27,7 +27,7 @@ model Category {
 
 // Компания
 model Company {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   name        String
   inn         String?  @unique
   url         String
@@ -40,6 +40,7 @@ model Company {
   category    Category @relation(fields: [categoryId], references: [id])
   isCustom    Boolean  @default(false)  // добавлена пользователем?
   isPartner   Boolean  @default(false)  // является партнёром
+  comments    Comment[] // комментарии к компании
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -47,4 +48,18 @@ model Company {
   @@index([status])
   @@index([inn])
   @@index([isPartner])
+}
+
+// Комментарий к компании
+model Comment {
+  id          String   @id @default(cuid())
+  text        String   // текст комментария
+  author      String?  // автор комментария (опционально)
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([createdAt])
 }

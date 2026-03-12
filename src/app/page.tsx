@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { CompanyFormDialog } from '@/components/CompanyFormDialog'
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
+import { CommentsDialog } from '@/components/CommentsDialog'
 import { 
   MessageSquare, 
   Mic, 
@@ -41,7 +42,8 @@ import {
   Trash2,
   Settings,
   Check,
-  ArrowUpDown
+  ArrowUpDown,
+  MessageCircle
 } from 'lucide-react'
 
 // Текущий год
@@ -75,12 +77,25 @@ interface Company {
   alsoIn?: string[]
   categoryId: string
   isPartner?: boolean
+  _count?: {
+    comments: number
+  }
   category?: {
     id: string
     key: string
     title: string
     iconName: string
   }
+}
+
+// Типизация комментария
+interface Comment {
+  id: string
+  text: string
+  author?: string | null
+  companyId: string
+  createdAt: string
+  updatedAt: string
 }
 
 // Типизация категории
@@ -131,27 +146,35 @@ const directionColors: Record<string, string> = {
 function LeaderCard({ 
   company, 
   isHighlighted,
-  onEdit,
-  onDelete 
+  onComments,
+  commentsCount = 0
 }: { 
   company: Company
   isHighlighted?: boolean
-  onEdit?: (company: Company) => void
-  onDelete?: (company: Company) => void
+  onComments?: (company: Company) => void
+  commentsCount?: number
 }) {
   const [isHovered, setIsHovered] = useState(false)
   
   return (
     <Card 
       className={`group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2 hover:border-primary/30 h-full flex flex-col
-        ${isHighlighted ? 'ring-2 ring-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/30' : ''}`}
+        ${isHighlighted ? 'ring-2 ring-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/30' : ''}
+        ${company.isPartner ? 'bg-sky-50/50 border-sky-200/50' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-xl font-bold truncate">{company.name}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-xl font-bold truncate">{company.name}</CardTitle>
+              {company.isPartner && (
+                <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 text-xs">
+                  Партнёр
+                </Badge>
+              )}
+            </div>
             {company.inn && (
               <CardDescription className="text-xs text-muted-foreground mt-1">
                 ИНН: {company.inn}
@@ -206,25 +229,20 @@ function LeaderCard({
             <ExternalLink className="h-4 w-4 mr-2" />
             Перейти на сайт
           </Button>
-          {onEdit && (
+          {onComments && (
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => onEdit(company)}
-              title="Редактировать"
+              onClick={() => onComments(company)}
+              title="Комментарии"
+              className="relative"
             >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onDelete(company)}
-              className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              title="Удалить"
-            >
-              <Trash2 className="h-4 w-4" />
+              <MessageCircle className="h-4 w-4" />
+              {commentsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                  {commentsCount > 9 ? '9+' : commentsCount}
+                </span>
+              )}
             </Button>
           )}
         </div>
@@ -239,21 +257,29 @@ function LeaderCard({
 function MiniCard({ 
   company, 
   isHighlighted,
-  onEdit,
-  onDelete 
+  onComments,
+  commentsCount = 0
 }: { 
   company: Company
   isHighlighted?: boolean
-  onEdit?: (company: Company) => void
-  onDelete?: (company: Company) => void
+  onComments?: (company: Company) => void
+  commentsCount?: number
 }) {
   return (
     <Card className={`group hover:shadow-md transition-all duration-200 hover:border-primary/30 h-full flex flex-col
-      ${isHighlighted ? 'ring-2 ring-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/30' : ''}`}>
+      ${isHighlighted ? 'ring-2 ring-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/30' : ''}
+      ${company.isPartner ? 'bg-sky-50/50 border-sky-200/50' : ''}`}>
       <CardContent className="p-3 flex-1 flex flex-col">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm truncate">{company.name}</h4>
+            <div className="flex items-center gap-1">
+              <h4 className="font-medium text-sm truncate">{company.name}</h4>
+              {company.isPartner && (
+                <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 text-[10px] px-1">
+                  P
+                </Badge>
+              )}
+            </div>
             {company.revenue && (
               <p className="text-xs text-muted-foreground truncate">{company.revenue}</p>
             )}
@@ -280,26 +306,20 @@ function MiniCard({
             ))}
           </div>
           <div className="flex items-center gap-1">
-            {onEdit && (
+            {onComments && (
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-6 px-1"
-                onClick={() => onEdit(company)}
-                title="Редактировать"
+                className="h-6 px-1 relative"
+                onClick={() => onComments(company)}
+                title="Комментарии"
               >
-                <Pencil className="h-3 w-3" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-6 px-1 text-destructive hover:text-destructive"
-                onClick={() => onDelete(company)}
-                title="Удалить"
-              >
-                <Trash2 className="h-3 w-3" />
+                <MessageCircle className="h-3 w-3" />
+                {commentsCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] rounded-full w-3 h-3 flex items-center justify-center">
+                    {commentsCount > 9 ? '9' : commentsCount}
+                  </span>
+                )}
               </Button>
             )}
             <Button 
@@ -323,7 +343,7 @@ function MiniCard({
 function CategorySectionVariantA({ 
   title, description, marketSize, growth, leaders, others, icon: Icon,
   searchQuery = '', companyMatchesSearch = () => false,
-  onEditCompany, onDeleteCompany
+  onComments
 }: { 
   title: string
   description: string
@@ -334,8 +354,7 @@ function CategorySectionVariantA({
   icon: React.ElementType
   searchQuery?: string
   companyMatchesSearch?: (company: Company, query: string) => boolean
-  onEditCompany?: (company: Company) => void
-  onDeleteCompany?: (company: Company) => void
+  onComments?: (company: Company) => void
 }) {
   return (
     <div className="space-y-6">
@@ -402,8 +421,8 @@ function CategorySectionVariantA({
               key={company.id} 
               company={company} 
               isHighlighted={companyMatchesSearch(company, searchQuery)}
-              onEdit={onEditCompany}
-              onDelete={onDeleteCompany}
+              onComments={onComments}
+              commentsCount={company._count?.comments || 0}
             />
           ))}
         </div>
@@ -422,8 +441,8 @@ function CategorySectionVariantA({
                 key={company.id} 
                 company={company} 
                 isHighlighted={companyMatchesSearch(company, searchQuery)}
-                onEdit={onEditCompany}
-                onDelete={onDeleteCompany}
+                onComments={onComments}
+                commentsCount={company._count?.comments || 0}
               />
             ))}
           </div>
@@ -439,7 +458,7 @@ function CategorySectionVariantA({
 function CategorySectionVariantB({ 
   title, description, marketSize, growth, leaders, others, icon: Icon,
   searchQuery = '', companyMatchesSearch = () => false,
-  onEditCompany, onDeleteCompany
+  onComments
 }: { 
   title: string
   description: string
@@ -450,8 +469,7 @@ function CategorySectionVariantB({
   icon: React.ElementType
   searchQuery?: string
   companyMatchesSearch?: (company: Company, query: string) => boolean
-  onEditCompany?: (company: Company) => void
-  onDeleteCompany?: (company: Company) => void
+  onComments?: (company: Company) => void
 }) {
   return (
     <div className="space-y-6">
@@ -483,8 +501,8 @@ function CategorySectionVariantB({
               key={company.id} 
               company={company} 
               isHighlighted={companyMatchesSearch(company, searchQuery)}
-              onEdit={onEditCompany}
-              onDelete={onDeleteCompany}
+              onComments={onComments}
+              commentsCount={company._count?.comments || 0}
             />
           ))}
         </div>
@@ -513,12 +531,19 @@ function CategorySectionVariantB({
                     {others.map((company) => {
                       const isHighlighted = companyMatchesSearch(company, searchQuery)
                       return (
-                        <tr key={company.id} className={`border-t hover:bg-muted/30 ${isHighlighted ? 'bg-orange-500/10 ring-1 ring-orange-500/50' : ''}`}>
+                        <tr key={company.id} className={`border-t hover:bg-muted/30 cursor-pointer ${isHighlighted ? 'bg-orange-500/10 ring-1 ring-orange-500/50' : ''} ${company.isPartner ? 'bg-sky-50/30' : ''}`}
+                          onClick={() => onComments && onComments(company)}
+                        >
                           <td className="p-3">
-                            <div>
+                            <div className="flex items-center gap-2">
                               <p className="font-medium text-sm">{company.name}</p>
-                              {company.revenue && <p className="text-xs text-muted-foreground">{company.revenue}</p>}
+                              {company.isPartner && (
+                                <Badge variant="outline" className="bg-sky-100 text-sky-700 border-sky-200 text-[10px]">
+                                  Партнёр
+                                </Badge>
+                              )}
                             </div>
+                            {company.revenue && <p className="text-xs text-muted-foreground">{company.revenue}</p>}
                           </td>
                           <td className="p-3 hidden md:table-cell">
                             <p className="text-sm text-muted-foreground line-clamp-1">{company.description}</p>
@@ -532,28 +557,7 @@ function CategorySectionVariantB({
                           </td>
                           <td className="p-3 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              {onEditCompany && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => onEditCompany(company)}
-                                  title="Редактировать"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {onDeleteCompany && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  onClick={() => onDeleteCompany(company)}
-                                  className="text-destructive hover:text-destructive"
-                                  title="Удалить"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button variant="ghost" size="sm" onClick={() => window.open(company.url, '_blank')}>
+                              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); window.open(company.url, '_blank') }}>
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
                             </div>
@@ -1003,6 +1007,10 @@ export default function Home() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingCompany, setDeletingCompany] = useState<Company | null>(null)
 
+  // Состояние для диалога комментариев
+  const [commentsDialogOpen, setCommentsDialogOpen] = useState(false)
+  const [commentsCompany, setCommentsCompany] = useState<Company | null>(null)
+
   // Функция загрузки данных из API
   const loadData = async () => {
     try {
@@ -1053,6 +1061,12 @@ export default function Home() {
   const openDeleteDialog = (company: Company) => {
     setDeleteDialogOpen(true)
     setDeletingCompany(company)
+  }
+
+  // Comments: Open comments dialog
+  const handleOpenComments = (company: Company) => {
+    setCommentsDialogOpen(true)
+    setCommentsCompany(company)
   }
 
   // CRUD: Confirm delete
@@ -1466,7 +1480,7 @@ export default function Home() {
                   icon={techData[cat].icon}
                   searchQuery={searchQuery}
                   companyMatchesSearch={companyMatchesSearch}
-                  onEditCompany={openEditDialog}
+                  onComments={handleOpenComments}
                 />
               ) : (
                 <CategorySectionVariantB 
@@ -1479,7 +1493,7 @@ export default function Home() {
                   icon={techData[cat].icon}
                   searchQuery={searchQuery}
                   companyMatchesSearch={companyMatchesSearch}
-                  onEditCompany={openEditDialog}
+                  onComments={handleOpenComments}
                 />
               ))}
             </TabsContent>
@@ -1668,6 +1682,13 @@ export default function Home() {
         onOpenChange={setDeleteDialogOpen}
         companyName={deletingCompany?.name || ''}
         onConfirm={handleDeleteConfirm}
+      />
+
+      {/* Comments Dialog */}
+      <CommentsDialog
+        open={commentsDialogOpen}
+        onOpenChange={setCommentsDialogOpen}
+        company={commentsCompany}
       />
     </div>
   )
