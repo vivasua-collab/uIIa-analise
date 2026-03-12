@@ -41,11 +41,17 @@ export async function PUT(
     const { id } = await params
     const data = await request.json()
 
+    // Очищаем ИНН - если "no-inn-*" или пустой, ставим null
+    let inn = data.inn || null
+    if (inn && (inn.startsWith('no-inn-') || inn.trim() === '')) {
+      inn = null
+    }
+
     const company = await db.company.update({
       where: { id },
       data: {
         name: data.name,
-        inn: data.inn || null,
+        inn: inn,
         url: data.url,
         description: data.description,
         features: JSON.stringify(data.features || []),

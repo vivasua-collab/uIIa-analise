@@ -8,28 +8,97 @@ uIIa-analise/
 │   ├── app/                    # Next.js App Router
 │   │   ├── page.tsx           # Главная страница (весь UI)
 │   │   ├── layout.tsx         # Корневой layout
-│   │   └── globals.css        # Глобальные стили Tailwind
-│   ├── components/ui/          # UI компоненты shadcn/ui
-│   │   ├── badge.tsx          # Бейджи и метки
-│   │   ├── button.tsx         # Кнопки
-│   │   ├── card.tsx           # Карточки
-│   │   ├── progress.tsx       # Прогресс-бары
-│   │   ├── scroll-area.tsx    # Область прокрутки
-│   │   ├── tabs.tsx           # Вкладки
-│   │   ├── toast.tsx          # Уведомления
-│   │   └── toaster.tsx        # Контейнер уведомлений
+│   │   ├── globals.css        # Глобальные стили Tailwind
+│   │   └── api/               # API маршруты
+│   │       ├── categories/    # API категорий
+│   │       ├── companies/     # API компаний (CRUD)
+│   │       └── comments/      # API комментариев
+│   ├── components/            # React компоненты
+│   │   ├── ui/               # UI компоненты shadcn/ui
+│   │   ├── CompanyFormDialog.tsx    # Форма редактирования компании
+│   │   ├── DeleteConfirmDialog.tsx  # Диалог подтверждения удаления
+│   │   └── CommentsDialog.tsx       # Диалог комментариев
 │   ├── hooks/
 │   │   └── use-toast.ts       # Хук для уведомлений
 │   └── lib/
-│       └── utils.ts           # Утилиты (cn для классов)
+│       ├── utils.ts           # Утилиты (cn для классов)
+│       └── db.ts              # Prisma клиент
+├── prisma/
+│   ├── schema.prisma          # Схема базы данных
+│   ├── seed.ts                # Начальные данные
+│   ├── export-to-seed.ts      # Экспорт данных
+│   └── import-companies.ts    # Импорт компаний из JSON
+├── db/
+│   └── custom.db              # База данных SQLite (в .gitignore)
 ├── public/                     # Статические файлы
-│   ├── logo.svg               # Логотип
-│   └── robots.txt             # SEO
 ├── package.json               # Зависимости
 ├── tailwind.config.ts         # Конфигурация Tailwind CSS
 ├── tsconfig.json              # Конфигурация TypeScript
 └── README.md                  # Документация
 ```
+
+## База данных (Prisma + SQLite)
+
+### Модели
+
+#### Company
+```prisma
+model Company {
+  id          String     @id @default(cuid())
+  name        String
+  inn         String?    @unique   // ИНН (null если нет)
+  url         String
+  description String
+  features    String               // JSON array
+  status      String               // "leader" или "active"
+  revenue     String?
+  alsoIn      String?              // JSON array
+  categoryId  String
+  category    Category  @relation(...)
+  isCustom    Boolean   @default(false)
+  isPartner   Boolean   @default(false)
+  comments    Comment[]
+  createdAt   DateTime
+  updatedAt   DateTime
+}
+```
+
+#### Category
+```prisma
+model Category {
+  id          String
+  key         String     @unique   // llm, audio, video, dl, gen
+  title       String
+  description String
+  marketSize  String
+  growth      String
+  iconName    String
+  companies   Company[]
+}
+```
+
+#### Comment
+```prisma
+model Comment {
+  id        String   @id @default(cuid())
+  text      String
+  author    String?
+  companyId String
+  company   Company  @relation(..., onDelete: Cascade)
+  createdAt DateTime
+  updatedAt DateTime
+}
+```
+
+### Связывание комментариев
+Комментарии связываются с компаниями:
+1. **По ИНН** (если заполнен и не пустой) - компании с одинаковым ИНН имеют общие комментарии
+2. **По имени** (если ИНН отсутствует) - компании с одинаковым названием имеют общие комментарии
+
+### Очистка ИНН
+- Значения `no-inn-*` автоматически заменяются на `null`
+- Пустые строки ИНН заменяются на `null`
+- Связывание по пустым полям НЕ производится
 
 ## Элементы UI
 
@@ -44,28 +113,18 @@ uIIa-analise/
 | `gen` | Генерация | Генеративный ИИ |
 | `compare` | Сравнение | Сравнение On-Premise решений |
 | `risks` | Риски | Риски ИИ-пузыря |
+| `manage` | Управление | CRUD для компаний |
 
 ### Карточки компаний
 
 #### LeaderCard (большая карточка)
-Используется для топ-6 лидеров в каждой категории.
-
-**Поля данных:**
-```typescript
-interface Company {
-  name: string        // Название компании
-  inn?: string        // ИНН (опционально)
-  url: string         // Сайт компании
-  description: string // Описание деятельности
-  features: string[]  // Ключевые технологии/фичи
-  status: 'leader' | 'active'
-  revenue?: string    // Выручка (опционально)
-  alsoIn?: string[]   // Другие направления (LLM, Аудио, Видео, DL, Генерация)
-}
-```
+- Используется для топ-6 лидеров в каждой категории
+- **Партнёр:** светло-голубой фон (`bg-sky-50/50`)
+- **Кнопка комментариев:** иконка MessageCircle с счётчиком
 
 #### MiniCard (маленькая карточка)
-Используется для остальных компаний в категории.
+- Используется для остальных компаний
+- **Партнёр:** бейдж "P" голубого цвета
 
 ### Бейджи направлений (directionColors)
 | Направление | Цвет |
@@ -76,68 +135,26 @@ interface Company {
 | DL | Бирюзовый (`teal-500`) |
 | Генерация | Розовый (`pink-500`) |
 
-## Данные
+## API Endpoints
 
-### marketOverview
-Общая статистика рынка:
-- `totalMarket` - Общий рынок Big Data + ИИ
-- `directMarket` - Рынок ИИ напрямую
-- `investments` - Инвестиции в ИИ
-- `growth` - Темп роста
-- `companies` - Количество игроков
-- `forecast2030` - Прогноз вклада в ВВП
+### /api/companies
+- `GET` - список компаний с фильтрацией
+- `POST` - создание компании
 
-### techData
-Данные по категориям технологий:
-- `llm` - LLM / Чат-боты (19 компаний)
-- `audio` - Аудио-аналитика (8 компаний)
-- `video` - Видео-аналитика (10 компаний)
-- `dl` - Deep Learning (12 компаний)
-- `gen` - Генеративный ИИ (7 компаний)
+### /api/companies/[id]
+- `GET` - получение компании
+- `PUT` - обновление компании
+- `DELETE` - удаление компании
 
-### On-Premise данные (onPremiseData)
-Параметры для калькулятора развёртывания:
-- `users` - Количество пользователей
-- `requests` - Запросов в месяц
-- `models` - Модели для развёртывания
-- `servers` - Конфигурация серверов
+### /api/categories
+- `GET` - список категорий
 
-## Компоненты
+### /api/comments
+- `GET ?companyId=xxx` - комментарии компании (связывание по ИНН/имени)
+- `POST` - создание комментария (для всех связанных компаний)
 
-### Header
-Заголовок с лого, названием и бейджем "Аналитика".
-
-### SearchBar
-Строка поиска по содержимому сайта в Header:
-- Поиск по названию компании
-- Поиск по описанию
-- Поиск по технологиям (features)
-- Поиск по ИНН
-- Кнопка очистки поиска (X)
-
-**Подсветка результатов:**
-- Вкладки с найденными результатами отмечаются жёлтой точкой
-- Карточки найденных компаний подсвечиваются жёлтой рамкой (`ring-2 ring-yellow-500`)
-
-**Функции:**
-- `companyMatchesSearch(company, query)` - проверка совпадения компании с запросом
-- `getTabsWithResults(query)` - определение вкладок с результатами поиска
-
-### Footer
-Подвал с копирайтом и датой актуализации данных.
-
-## Стили
-
-### Tailwind классы
-- `bg-primary/10` - Фон с прозрачностью 10%
-- `text-muted-foreground` - Серый текст
-- `border-primary/30` - Граница с прозрачностью 30%
-- `hover:shadow-xl` - Тень при наведении
-- `transition-all duration-300` - Плавные переходы
-
-### Анимации
-- `hover:-translate-y-1` - Подъём карточки при наведении
-- `animate-pulse` - Пульсация (для загрузки)
+### /api/comments/[id]
+- `DELETE` - удаление комментария
 
 ## Зависимости
 
@@ -145,18 +162,21 @@ interface Company {
 |-------|--------|------------|
 | next | ^16.1.1 | Фреймворк |
 | react | ^19.0.0 | UI библиотека |
+| prisma | ^5.22.0 | ORM |
+| @prisma/client | ^5.22.0 | Prisma клиент |
 | lucide-react | ^0.525.0 | Иконки |
-| tailwind-merge | ^3.3.1 | Объединение классов |
-| clsx | ^2.1.1 | Условные классы |
-| class-variance-authority | ^0.7.1 | Варианты компонентов |
-| @radix-ui/* | various | Примитивы UI |
+| @radix-ui/react-* | various | Примитивы UI |
 
 ## Переменные окружения
 
-Файл `.env` (опционально):
+Файл `.env`:
 ```
-# База данных (если нужна)
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./db/custom.db"
+```
+
+Файл `.env.example` (в Git):
+```
+DATABASE_URL="file:./db/custom.db"
 ```
 
 ## Команды
@@ -165,5 +185,9 @@ DATABASE_URL="file:./dev.db"
 |---------|----------|
 | `bun run dev` | Запуск в режиме разработки (порт 3000) |
 | `bun run build` | Сборка для продакшена |
-| `bun run start` | Запуск продакшен-версии |
 | `bun run lint` | Проверка ESLint |
+| `bun run db:push` | Применить схему Prisma |
+| `bun run db:seed` | Заполнить БД начальными данными |
+| `bun run db:export` | Экспорт данных в seed.ts |
+| `bun run db:import` | Импорт компаний из JSON |
+| `bun run db:studio` | Prisma Studio (GUI) |
