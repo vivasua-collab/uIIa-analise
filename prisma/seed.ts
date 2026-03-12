@@ -131,46 +131,47 @@ const companiesByCategory: Record<string, Array<{
       "name": "BSS",
       "inn": "7726587769",
       "url": "https://bssys.com/",
-      "description": "Речевая аналитика, голосовая биометрия, тренажёр оператора. Топ-10 рынка ИИ.",
-      "features": ["Речевая аналитика", "Биометрия", "Суфлёр", "Тренажёр"],
+      "description": "Digital2Speech - речевая аналитика, голосовая биометрия. Топ-10 рынка ИИ.",
+      "features": ["Digital2Speech", "Речевая аналитика", "Биометрия", "Суфлёр"],
       status: 'leader',
-      "revenue": "Топ-10 рынка",
+      "revenue": "3.1 млрд ₽",
       "alsoIn": ["LLM"]
     },
     {
       "name": "Naumen",
       "inn": "6671111140",
       "url": "https://www.naumen.ru/",
-      "description": "Речевая аналитика для контакт-центров. Распознавание речи, анализ звонков, контроль качества.",
-      "features": ["Речевая аналитика", "ASR", "Контакт-центры", "Sentiment"],
+      "description": "Naumen Speech AI, Erudite - речевая аналитика для контакт-центров. Контроль качества, поиск.",
+      "features": ["Speech AI", "Erudite", "Контакт-центры", "Enterprise Search"],
       status: 'leader',
-      "revenue": "Лидер контакт-центров"
+      "revenue": "1.45 млрд ₽"
     },
     {
       "name": "VS Robotics",
       "inn": "7736303529",
       "url": "https://vsrobotics.ru/",
-      "description": "Голосовые роботы для контакт-центров. Распознавание речи, анализ эмоций, транскрибация.",
-      "features": ["Голосовой робот", "ASR", "Эмоции", "Транскрибация"],
+      "description": "Голосовые роботы для контакт-центров. Робот-оператор, речевая аналитика, платформа для разметки данных.",
+      "features": ["Робот-оператор", "Речевая аналитика", "Разметка данных", "Транскрибация"],
       status: 'leader',
-      "revenue": "Активный игрок"
+      "revenue": "2.4 млрд ₽"
     },
     {
       "name": "Neovox",
       "inn": "7723813089",
       "url": "https://neovox.ru/",
-      "description": "Речевая аналитика, транскрибация",
-      "features": ["ASR", "Аналитика"],
-      status: 'active'
+      "description": "Голосовые роботы, чат-боты, RPA, речевая аналитика.",
+      "features": ["Голосовые роботы", "Чат-боты", "RPA", "Речевая аналитика"],
+      status: 'active',
+      "revenue": "67 млн ₽"
     },
     {
       "name": "3iTech",
       "inn": "7716554066",
       "url": "https://3itech.ru/",
-      "description": "Генеративный AI и речевые технологии",
-      "features": ["GenAI", "Речь", "TTS", "ASR"],
-      status: 'active',
-      "revenue": "Активный рост",
+      "description": "3i TouchPoint Analytics, 3iLLM - речевые технологии и генеративный AI.",
+      "features": ["3iLLM", "TouchPoint Analytics", "TTS", "ASR"],
+      status: 'leader',
+      "revenue": "417 млн ₽",
       "alsoIn": ["LLM", "Генерация"]
     },
     {
@@ -232,63 +233,67 @@ const companiesByCategory: Record<string, Array<{
       "description": "Evolution AI Factory - платформа для GenAI и ML. Распределённое обучение, ML Inference, GPU NVIDIA.",
       "features": ["AI Factory", "ML Inference", "Distributed Train", "GPU"],
       status: 'leader',
-      "revenue": "Лидер облачного ИИ"
+      "revenue": "24.4 млрд ₽",
+      "alsoIn": ["LLM", "Генерация"]
     },
     {
       "name": "Napoleon IT",
       "inn": "7453230164",
       "url": "https://napoleonit.ru/",
-      "description": "ML-разработка, нейросети. AI TALENT HUB с ИТМО. Data Science, Computer Vision.",
-      "features": ["ML", "Нейросети", "Data Science", "Обучение"],
+      "description": "ML-разработка, Computer Vision. AI TALENT HUB с ИТМО. Заказчики: Магнит, Лента, Hoff.",
+      "features": ["ML", "Computer Vision", "Data Science", "Обучение"],
       status: 'leader',
-      "revenue": "Активный игрок"
+      "revenue": "413 млн ₽",
+      "alsoIn": ["Видео"]
     },
     {
       "name": "Content AI",
       "inn": "9715416652",
       "url": "https://contentai.ru/",
-      "description": "ML для обработки документов",
-      "features": ["ML", "OCR"],
-      status: 'active',
+      "description": "ContentCapture, ContentReader PDF, Intelligent Search - обработка документов и поиск.",
+      "features": ["ContentCapture", "OCR", "Intelligent Search", "PDF"],
+      status: 'leader',
       "revenue": "1.2 млрд ₽",
-      "alsoIn": ["Видео"]
+      "alsoIn": ["LLM", "Видео"]
     },
     {
       "name": "Автомакон",
       "inn": "5003074225",
       "url": "https://automacon.ru/",
-      "description": "Big Data и ML",
-      "features": ["Big Data", "ML"],
+      "description": "BI-системы, нейроанализ отзывов, AiDoc, ИИ-ассистенты. Интегратор ИИ-решений.",
+      "features": ["BI", "Нейроанализ", "AiDoc", "Ассистенты"],
       status: 'active',
-      "revenue": "Активный интегратор",
-      "alsoIn": ["Видео"]
+      "revenue": "750 млн ₽",
+      "alsoIn": ["LLM"]
     },
     {
       "name": "Юзтех",
       "inn": "9723236163",
       "url": "https://usetech.ru/",
-      "description": "ML и компьютерное зрение",
-      "features": ["ML", "CV"],
+      "description": "Цифровые двойники рисков, CV, LLM, речевая аналитика, рекомендательные системы.",
+      "features": ["Цифровые двойники", "CV", "LLM", "Речевая аналитика"],
       status: 'active',
-      "revenue": "Активный игрок",
-      "alsoIn": ["Видео"]
+      "revenue": "965 млн ₽",
+      "alsoIn": ["Видео", "LLM", "Аудио"]
     },
     {
       "name": "ZeBrains",
       "inn": "7325145393",
       "url": "https://zebrains.ru/",
-      "description": "ML-решения",
-      "features": ["AI/ML", "PR"],
+      "description": "Цифровые сотрудники (ИИ-агенты), Virtual try-on, модели прогнозирования, CV.",
+      "features": ["ИИ-агенты", "Virtual try-on", "Прогнозирование", "CV"],
       status: 'active',
-      "alsoIn": ["Видео"]
+      "revenue": "227 млн ₽",
+      "alsoIn": ["Видео", "LLM"]
     },
     {
       "name": "SimbirSoft",
       "inn": "7300044805",
       "url": "https://www.simbirsoft.com/",
-      "description": "ML и глубокое обучение",
-      "features": ["ML", "DL"],
-      status: 'active'
+      "description": "ML и глубокое обучение. Заказчики: Аскона, Технониколь, HeadHunter, Татнефть, ВкусВилл.",
+      "features": ["ML", "DL", "Интеграция", "Разработка"],
+      status: 'active',
+      "revenue": "476 млн ₽"
     },
     {
       "name": "Terabit Digital",
@@ -297,6 +302,36 @@ const companiesByCategory: Record<string, Array<{
       "description": "ML-разработка под ключ",
       "features": ["ML", "AI"],
       status: 'active'
+    },
+    {
+      "name": "Онланта (ГК Ланит)",
+      "inn": "7722653629",
+      "url": "https://onlanta.ru/",
+      "description": "Onlanta AI Hub - платформа генеративного ИИ для корпоративного сектора. Входит в ГК Ланит.",
+      "features": ["AI Hub", "GenAI", "Enterprise", "Платформа"],
+      status: 'active',
+      "revenue": "3.5 млрд ₽",
+      "alsoIn": ["LLM", "Генерация"]
+    },
+    {
+      "name": "Red_mad_robot",
+      "inn": "7703435262",
+      "url": "https://redmadrobot.ru/",
+      "description": "RAG, LLM, VLM решения. Цифровые продукты для крупного бизнеса. RAG-системы, векторные БД.",
+      "features": ["RAG", "LLM", "VLM", "Vector DB"],
+      status: 'active',
+      "revenue": "1.1 млрд ₽",
+      "alsoIn": ["LLM"]
+    },
+    {
+      "name": "ITFB Group",
+      "inn": "7702775650",
+      "url": "https://itfbgroup.ru/",
+      "description": "Polina AI, EasyDoc - ИИ-решения для документооборота и аналитики.",
+      "features": ["Polina AI", "EasyDoc", "Документы", "Аналитика"],
+      status: 'active',
+      "revenue": "505 млн ₽",
+      "alsoIn": ["LLM"]
     }
   ],
   "gen": [
@@ -384,86 +419,98 @@ const companiesByCategory: Record<string, Array<{
       "name": "CorpGPT (Нейросети)",
       "inn": "7733349229",
       "url": "https://corpgpt.ru/",
-      "description": "No-code платформа для ИИ-агентов",
-      "features": ["No-code", "Enterprise"],
-      status: 'active'
+      "description": "No-code платформа для ИИ-агентов. Заказчики: Норникель, Сколково, Ростелеком, Росатом.",
+      "features": ["No-code", "CorpGPT", "Enterprise", "RAG"],
+      status: 'leader',
+      "revenue": "20.5 млн ₽"
     },
     {
       "name": "meetAI",
       "inn": "9705223482",
       "url": "https://mymeet.ai/ru/",
-      "description": "ИИ-ассистент для встреч",
-      "features": ["Транскрибация", "Отчёты"],
-      status: 'active'
+      "description": "ИИ-ассистент для встреч и проектов. Заказчики: Контур, Сбер, Яндекс, Ozon.",
+      "features": ["Транскрибация", "Отчёты", "Встречи", "Проекты"],
+      status: 'active',
+      "revenue": "7.8 млн ₽"
     },
     {
       "name": "GPTZATOR (Lad)",
       "inn": "5260320971",
       "url": "https://gptzator.ru/",
-      "description": "Корпоративный поиск и RAG",
-      "features": ["RAG", "Поиск"],
-      status: 'active'
+      "description": "Корпоративный поиск и RAG. Заказчик: Газпромтранс.",
+      "features": ["RAG", "Корпоративный поиск", "Конференц-связь", "LLM"],
+      status: 'active',
+      "revenue": "63 млн ₽"
     },
     {
       "name": "PROсковья (1С)",
       "inn": "9713015920",
       "url": "https://1cproconsulting.ru/proskovya",
-      "description": "ИИ для 1С на базе LLM",
-      "features": ["1С", "LLM"],
-      status: 'active'
+      "description": "ИИ для 1С на базе LLM. Интеграция с экосистемой 1С.",
+      "features": ["1С", "LLM", "Интеграция", "Автоматизация"],
+      status: 'active',
+      "revenue": "26 млн ₽"
     },
     {
       "name": "AutoFAQ",
       "inn": "5047186705",
       "url": "https://autofaq.ai/",
-      "description": "Чат-боты для поддержки",
-      "features": ["Поддержка", "Xplain"],
-      status: 'active'
+      "description": "AutoFAQ, Xplain AI Copilot - чат-боты для поддержки. Ростелеком, Газпромбанк, ВТБ, МТС.",
+      "features": ["Чат-боты", "Xplain", "Поддержка", "Copilot"],
+      status: 'leader',
+      "revenue": "161 млн ₽"
     },
     {
       "name": "Robin (Softline)",
       "inn": "9725114756",
       "url": "https://slsoft.ru/products/robin/",
-      "description": "RPA + ИИ-ассистент",
-      "features": ["RPA", "Ассистент"],
-      status: 'active'
+      "description": "RPA + ИИ-ассистент. Заказчики: Аэрофлот, РусГидро, Газпром, РЖД.",
+      "features": ["RPA", "Ассистент", "Автоматизация", "Cloud"],
+      status: 'leader',
+      "revenue": "599 млн ₽"
     },
     {
       "name": "Шерпа Роботикс",
       "inn": "3019027499",
       "url": "https://sherparpa.ru/",
-      "description": "RPA + ИИ-агенты",
-      "features": ["RPA", "Автоматизация"],
-      status: 'active'
+      "description": "Sherpa AI Server - RPA + ИИ-агенты. Заказчики: Лемана Про, билайн, Северсталь.",
+      "features": ["Sherpa AI Server", "RPA", "ИИ-агенты", "Автоматизация"],
+      status: 'leader',
+      "revenue": "95 млн ₽"
     },
     {
       "name": "Рег.облако",
       "inn": "7733568767",
       "url": "https://reg.cloud/",
-      "description": "ИИ-ассистент в облаке",
-      "features": ["Ассистент", "Облако"],
-      status: 'active'
+      "description": "ИИ-ассистент в облаке. Заказчики: Boxberry, РБК, Фабрика данных.",
+      "features": ["ИИ-ассистент", "Облако", "Enterprise", "SaaS"],
+      status: 'leader',
+      "revenue": "3.6 млрд ₽"
     },
     {
       "name": "Directum",
       "inn": "1835056809",
       "url": "https://www.directum.ru/",
-      "description": "Документооборот с ИИ",
-      "features": ["Документы", "ИИ"],
-      status: 'active'
+      "description": "ИИ-сервисы Ario (OCR, ML, LLM, NLP). Документооборот с ИИ.",
+      "features": ["Ario", "OCR", "LLM", "NLP"],
+      status: 'leader',
+      "revenue": "2.2 млрд ₽"
     }
   ],
   "video": [
     {
       "name": "VisionLabs",
+      "inn": "7701954054",
       "url": "https://visionlabs.ru/",
-      "description": "Лидер рынка компьютерного зрения в России. Биометрия, видеоаналитика, распознавание лиц. Международное присутствие.",
+      "description": "Лидер рынка компьютерного зрения в России. Биометрия, видеоаналитика, распознавание лиц. Входит в экосистему МТС.",
       "features": ["Распознавание лиц", "Биометрия", "Видеоаналитика", "CV"],
       status: 'leader',
-      "revenue": "Лидер рынка"
+      "revenue": "1.1+ млрд ₽",
+      "parentInn": "7740000076"
     },
     {
       "name": "VizorLabs",
+      "inn": "7731395981",
       "url": "https://vizorlabs.ru/",
       "description": "Лидер промышленной видеоаналитики. Мониторинг безопасности труда, контроль СИЗ, детекция нарушений.",
       "features": ["Промышленная CV", "Безопасность", "СИЗ", "Мониторинг"],
@@ -485,11 +532,29 @@ const companiesByCategory: Record<string, Array<{
       "name": "Наносемантика",
       "inn": "7703761097",
       "url": "https://nanosemantics.ai/",
-      "description": "CV-решения, аватары",
-      "features": ["CV", "Аватары"],
-      status: 'active',
-      "revenue": "Лидер NLP",
+      "description": "DialogOS, NLab Speech (ASR/TTS), NLab Marker - CV-решения, аватары, чат-боты.",
+      "features": ["DialogOS", "NLab Speech", "CV", "Аватары"],
+      status: 'leader',
+      "revenue": "372 млн ₽",
       "alsoIn": ["LLM", "Аудио"]
+    },
+    {
+      "name": "АСТ",
+      "inn": "7724244406",
+      "url": "https://acti.ru/",
+      "description": "Neurotrack - интеллектуальная видеоаналитика. Решения для транспорта, безопасности, промышленности.",
+      "features": ["Neurotrack", "Видеоаналитика", "LPR", "Безопасность"],
+      status: 'active',
+      "revenue": "1.2 млрд ₽"
+    },
+    {
+      "name": "Rubius",
+      "inn": "7017252288",
+      "url": "https://rubius.com/ru",
+      "description": "CV-системы для контроля качества, прогноз спроса, управление доступностью товаров.",
+      "features": ["CV", "Прогнозирование", "Контроль качества", "Ритейл"],
+      status: 'active',
+      "revenue": "Активный игрок"
     }
   ]
 }

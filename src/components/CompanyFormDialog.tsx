@@ -324,12 +324,15 @@ export function CompanyFormDialog({
                 <Building2 className="h-4 w-4" />
                 Материнская компания (экосистема)
               </Label>
-              <Select value={parentCompanyId} onValueChange={setParentCompanyId}>
+              <Select 
+                value={parentCompanyId || 'none'} 
+                onValueChange={(v) => setParentCompanyId(v === 'none' ? '' : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Без материнской компании" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Без материнской компании</SelectItem>
+                  <SelectItem value="none">Без материнской компании</SelectItem>
                   {parentCompanies.map((pc) => (
                     <SelectItem key={pc.id} value={pc.id}>
                       {pc.name}
