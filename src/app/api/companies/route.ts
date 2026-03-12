@@ -40,11 +40,36 @@ export async function GET(request: NextRequest) {
       ]
     })
 
-    // Парсим JSON поля из строки в массив
+    // Получаем все комментарии и группируем по названию компании
+    const allCompanies = await db.company.findMany({
+      select: { id: true, name: true }
+    })
+    
+    const companyNameToIds: Record<string, string[]> = {}
+    for (const c of allCompanies) {
+      if (!companyNameToIds[c.name]) {
+        companyNameToIds[c.name] = []
+      }
+      companyNameToIds[c.name].push(c.id)
+    }
+
+    // Получаем количество комментариев для каждой группы названий
+    const commentCounts: Record<string, number> = {}
+    for (const [name, ids] of Object.entries(companyNameToIds)) {
+      const count = await db.comment.count({
+        where: { companyId: { in: ids } }
+      })
+      commentCounts[name] = count
+    }
+
+    // Парсим JSON поля и обновляем счётчик комментариев
     const parsedCompanies = companies.map(c => ({
       ...c,
       features: typeof c.features === 'string' ? JSON.parse(c.features) : (c.features || []),
-      alsoIn: c.alsoIn ? (typeof c.alsoIn === 'string' ? JSON.parse(c.alsoIn) : c.alsoIn) : []
+      alsoIn: c.alsoIn ? (typeof c.alsoIn === 'string' ? JSON.parse(c.alsoIn) : c.alsoIn) : [],
+      _count: {
+        comments: commentCounts[c.name] || 0
+      }
     }))
 
     return NextResponse.json(parsedCompanies)
