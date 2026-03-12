@@ -86,15 +86,9 @@ npm install
 cp .env.example .env
 ```
 
-Или создайте файл вручную:
-
-```bash
-# Содержимое файла .env
-DATABASE_URL=file:./db/custom.db
-```
-
-> **Для продакшена:** укажите абсолютный путь, например:
-> `DATABASE_URL=file:/var/www/uIIa-analise/db/custom.db`
+> ⚠️ **ВАЖНО:** Путь к базе данных указывается **относительно файла `prisma/schema.prisma`**!
+> - `file:../db/custom.db` = корректный путь к `db/custom.db` в корне проекта
+> - `file:./db/custom.db` = НЕВЕРНО, создаст базу в `prisma/db/`
 
 ### 5. Инициализация базы данных
 
